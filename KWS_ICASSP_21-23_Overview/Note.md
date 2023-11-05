@@ -2,7 +2,8 @@
 > 为撰写综述做准备，内容来自2021-2023的ICASSP, SE, TASL
 ***
 ## 1. A LIGHTWEIGHT DYNAMIC FILTER FOR KEYWORD SPOTTING
-> Kim D, Ko K, Kwak J, et al. A Lightweight Dynamic Filter For Keyword Spotting[C]//2023 IEEE International Conference on Acoustics, Speech, and Signal Processing Workshops (ICASSPW). IEEE, 2023: 1-5.  (韩国高丽大学，美国德雷塞尔大学) (这篇基本没看懂，不太明白像素级实例级动态滤波之类的)
+动态卷积滤波器，去噪,（已汇报）
+> Kim D, Ko K, Kwak J, et al. A Lightweight Dynamic Filter For Keyword Spotting[C]//2023 IEEE International Conference on Acoustics, Speech, and Signal Processing Workshops (ICASSPW). IEEE, 2023: 1-5.  (韩国高丽大学，美国德雷塞尔大学) 
 ### Abstract
 Keyword Spotting (KWS) from speech signals is widely applied toperform fully hands-free speech recognition. The KWS network isdesigned as a small-footprint model so it can continuously be active.Recent efforts have explored dynamic filter-based models in deeplearning frameworks to enhance the system’s robustness or accuracy.However, as a dynamic filter framework requires high computational costs, the implementation is limited to the computational conditionof the device. In this paper, we propose a lightweight dynamic filterto improve the performance of KWS. Our proposed model dividesthe dynamic filter into two branches to reduce computational complexity: pixel level and instance level. The proposed lightweight dynamic filter is applied to the front end of KWS to enhance the separability of the input data. The experimental results show that our model is robustly working on unseen noise and small training data environments by using a small computational resource. 
 
@@ -32,11 +33,14 @@ Keyword Spotting (KWS) from speech signals is widely applied toperform fully han
 - 动态感知器  
   ![](img/mk-2023-09-29-11-24-45.png)
 - 动态卷积  
-  ![](img/mk-2023-09-29-11-25-58.png) 
+  ![](img/mk-2023-09-29-11-25-58.png)   
 
+#### 0均值标准化  
+![](img/mk-2023-10-11-17-41-02.png)
 
   ***
-## 2. A Novel Loss Function and Training Strategy for Noise-Robust Keyword Spotting  
+## 2. A Novel Loss Function and Training Strategy for Noise-Robust Keyword Spotting 
+提出了新的损失函数 
 > López-Espejo I, Tan Z H, Jensen J. A novel loss function and training strategy for noise-robust keyword spotting[J]. IEEE/ACM Transactions on Audio, Speech, and Language Processing, 2021, 29: 2254-2266.(丹麦奥尔堡大学)  
 
 ### Abstract  
@@ -66,7 +70,8 @@ the best performance for unseen noises is clearly obtained by the proposed metho
 
 
 ***
-## 3. Autokws: Keyword spotting with differentiable architecture search  
+## 3. Autokws: Keyword spotting with differentiable architecture search 
+NAS(神经结构搜索) 作为拓展阅读（已汇报）
 > Zhang B, Li W, Li Q, et al. Autokws: Keyword spotting with differentiable architecture search[C]//ICASSP 2021-2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2021: 2830-2834.(小米AI实验室)  
 
 ### Abstract  
@@ -150,7 +155,7 @@ DARTS在大搜索空间中搜索有复杂拓扑结构的高效架构cell，而�
 
 ***
 ## 4. Convmixer: Feature interactive convolution with curriculum learning for small footprint and noisy far-field keyword spotting  
-***留意此文***
+***留意此文（已汇报）***
 > Ng D, Chen Y, Tian B, et al. Convmixer: Feature interactive convolution with curriculum learning for small footprint and noisy far-field keyword spotting[C]//ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2022: 3603-3607.(阿里巴巴，新加坡南洋理工)  
 
 ### Abstract  
@@ -248,6 +253,7 @@ Automatic CL 的至少其中一个是以数据驱动的方式自动设计。
 
 ***
 ## 5. Dynamic curriculum learning via data parameters for noise robust keyword spotting
+已汇报
 > Higuchi T, Saxena S, Souden M, et al. Dynamic curriculum learning via data parameters for noise robust keyword spotting[C]//ICASSP 2021-2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2021: 6848-6852.(苹果)  
 
 ### Abstract  
@@ -259,13 +265,31 @@ Index Terms: Noise robustness, acoustic modeling, keyword spotting, curriculum l
 
 （我们提出动态课程学习通过数据参数噪声鲁棒关键字发现。数据参数学习最近被引入到图像处理中，其中目标类和实例的权重参数，即所谓的数据参数，与模型参数一起被引入和优化。数据参数在训练过程中缩放逻辑并控制类和实例的重要性，从而实现自动课程学习，而无需对训练数据进行额外的注释。同样，在本文中，我们建议使用这种课程学习方法进行声学建模，并使用数据参数训练干净和有噪声的话语声学模型。该方法在梯度下降优化中自动学习类和实例的难度，例如由于语音噪声比(SNR)低，并进行课程学习。本课程的学习使声学模型的准确性得到全面提高。我们评估了所提出的方法在关键字发现任务上的有效性。实验结果表明，与在多条件数据集上简单训练的基线模型相比，该模型的误拒率相对降低了7.7%。）
 
-这篇真的有点没太看懂，相关资料也少，今天也不是特别专注，啃不下去。
+这篇真的有点没太看懂，相关资料也少，今天也不是特别专注，啃不下去。  
+[21]有数据参数开源代码
+### method  
+#### Class parameters  
+我的理解是对于不重要的类，或者训练集中样本少的类，就通过类参数减小它的softmax值  
+![](img/mk-2023-10-18-09-52-49.png)  
+#### Instance parameters  
+每条样本所有时间步一起只有一个instance parameter(或者说共享一个instance parameter)，不过我也不太清楚它用在哪里。
+![](img/mk-2023-10-18-10-02-01.png)
+#### Data parameters  
+以上两个参数每帧相加  
+![](img/mk-2023-10-18-10-08-33.png)  
+这里平均交叉熵计算存疑，  
+此处是用来对数据参数进行优化，但是交叉熵的计算不是应该再乘上一个真实概率吗？为什么没有。
+![](img/mk-2023-10-18-10-25-30.png)  
+效果不好时，数据参数增大，模型梯度减小，优化慢，效果好时，模型梯度大，优化快，相当于简单的快点学，难得慢慢学。
+![](img/mk-2023-10-18-11-07-18.png)
 
-
+### 知识补充  
+#### logit
+[一篇文章搞懂logit, logistic和sigmoid的区别](https://zhuanlan.zhihu.com/p/358223959)
 
 ***
 ## 6. End-to-end keyword spotting using neural architecture search and quantization 
-此文使用原始语音做输入 
+此文使用原始语音做输入（已汇报） 
 > Peter D, Roth W, Pernkopf F. End-to-end keyword spotting using neural architecture search and quantization[C]//ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2022: 3423-3427.(奥地利格拉茨理工大学)
 
 ### Abstract
@@ -333,7 +357,7 @@ Brevitas是一个用于量化感知训练（QAT）的Pytorch库。
 
 ***
 ## 7. End-to-end low resource keyword spotting through character recognition and beam-search re-scoring  
-KWS模型不提参数量只比效果就是耍流氓
+KWS模型不提参数量只比效果就是耍流氓，不过这篇有源码，可以看看CTC损失怎么写的，优点是小数据微调。(已汇报)
 > Mekonnen E T, Brutti A, Falavigna D. End-to-end low resource keyword spotting through character recognition and beam-search re-scoring[C]//ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2022: 8182-8186.(意大利特伦托大学)
 
 ### Abstract  
@@ -479,6 +503,7 @@ EfficientNet B0-B7 参数：
 
 ***  
 ## 12. LETR: A lightweight and efficient transformer for keyword spotting  
+已汇报
 > Ding K, Zong M, Li J, et al. LETR: A lightweight and efficient transformer for keyword spotting[C]//ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2022: 7987-7991.(商汤)  
 
 ### Abstract
@@ -520,6 +545,13 @@ ViT将输入图片分为多个patch（16x16），再将每个patch投影为固�
 
 ![](img/mk-2023-10-04-15-15-45.png)
 ![](img/mk-2023-10-04-15-17-35.png)
+
+#### SpecAugment  
+![](img/mk-2023-10-11-09-58-06.png)  
+
+#### 相对位置编码  
+[相对位置编码(relative position representation)](https://zhuanlan.zhihu.com/p/397269153)  
+[Transformer改进之相对位置编码(RPE)](https://zhuanlan.zhihu.com/p/105001610)
 
 ***  
 ## 13. Multilingual Customized Keyword Spotting Using Similar-Pair Contrastive Learning  
@@ -575,6 +607,7 @@ Deep Neural Network–Hidden Markov Model (DNN-HMM) based methods have been succ
 
 ***  
 ## 15. Progressive continual learning for spoken keyword spotting  
+已汇报
 > Huang Y, Hou N, Chen N F. Progressive continual learning for spoken keyword spotting[C]//ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2022: 7552-7556.(新加坡南洋理工)
 
 ### Abstract  
@@ -702,6 +735,7 @@ maxpool loss
 ### Result 
 ![](img/mk-2023-10-05-11-27-29.png)
 
-
+# query by example 实例查询  
+# 环境对齐 
 
 
