@@ -366,7 +366,7 @@ densenet 各个层之间稠密连接，可以实现特征复用，可学习组�
 
 
 ## Broadcasted Residual Learning for Efficient Keyword Spotting
-> Cite as: Kim, B., Chang, S., Lee, J., Sung, D. (2021) Broadcasted Residual Learning for Efficient Keyword Spotting. Proc. Interspeech 2021, 4538-4542, doi: 10.21437/Interspeech.2021-383
+> Cite as: Kim, B., Chang, S., Lee, J., Sung, D. (2021) Broadcasted Residual Learning for Efficient Keyword Spotting. Proc. Interspeech 2021, 4538-4542, doi: 10.21437/Interspeech.2021-383(高通)
 
 对语谱图做卷积？
 对MLPMixer感兴趣
@@ -383,8 +383,21 @@ Keyword spotting is an important research field because it plays a key role in d
 ![](img/mk-2023-11-29-12-29-34.png)  
 频域上先做卷积，然后频域通道压缩到一个维度，之后在时域上做卷积，残差连接（这个过程会广播）。
 
+### Experiment  
+40-dimensional log Mel spectrograms(Batch_size, 1, 40, T)  
+SSN:S=5  
+#### Data  
+12分类['yes', 'no', 'up', 'down', 'left', 'right', 'on', 'off', 'stop', 'go', 'unknown', 'silence']。“未知单词”类别包含剩余的二十个类中随机抽样的单词。“静音”类别包含从背景噪音音频文件中随机提取的一秒钟的剪辑。（此处我将Unknow Word和Silence数量设置为4000，与其他关键词数量大概一致，8:1:1划分数据）  
+40维 log Mel spectrograms, 窗口大小30ms, 帧移10ms, 偏移[-100, 100], 背景噪声概率0.8（只在训练集加噪音？）, SpecAugment两个时间和两个频率掩码, 最小的模型BC-ResNet-1不使用SpecAugment，而BCResNet-{1.5，2，3，6，8}使用具有{1，3，5，7，7}个频率掩码参数的SpecAugment，分别具有固定的时间掩码参数20。(两个时间掩码，两个频率掩码，可以在特征提取结束之后进行，比较随机)
+#### Implementation Details  
+使用具有五个子带的SSN, 随机梯度下降(SGD)优化器对所有模型进行200个时期的训练，momentum为0.9，weight decay为0.001，小批量大小为100。学习率在前五个时期从零线性增加到0.1，作为预热，然后使用cosine annealing衰减到零.
+
+
+
+
 ### Result  
-![](img/mk-2023-11-29-12-34-28.png)
+![](img/mk-2023-11-29-12-34-28.png)  
+![](img/mk-2023-12-20-15-55-46.png)
 
 
 
@@ -664,16 +677,122 @@ We propose a max-pooling based loss function for training Long Short-Term Memory
 ![](img/mk-2023-12-09-18-39-53.png)  
 
 
+## Attention-Free Keyword Spotting  
+不想看transformer了。都没有KWT98.5%好，但是KWT太大了。
+> Morshed M M, Ahsan A O. Attention-free keyword spotting[J]. arXiv preprint arXiv:2110.07749, 2021.(ICLR2022, 伊斯兰技术大学)  
+### Abstract  
+Till now, attention-based models have been used with great success in the keyword spotting problem domain. However, in light of recent advances in deep learning, the question arises whether self-attention is truly irreplaceable for recognizing speech keywords. We thus explore the usage of gated MLPs—previously shown to be alternatives to transformers in vision tasks—for the keyword spotting task. We provide a family of highly efficient MLP-based models for keyword spotting, with less than 0.5 million parameters. We show that our approach achieves competitive performance on Google Speech Commands V2-12 and V2-35 benchmarks with much fewer parameters than self-attention-based methods.  
+
+到目前为止，基于注意力的模型已经在关键词识别问题领域获得了巨大的成功。然而，鉴于深度学习的最新进展，问题出现了，对于识别语音关键词来说，自我注意是否真的不可替代。因此，我们探索了门控MLP的使用——以前显示为视觉任务中变形金刚的替代物——用于关键字识别任务。我们提供了一系列高效的基于MLP的关键字识别模型，参数不到50万。我们表明，我们的方法在谷歌语音命令V2-12和V2-35基准上取得了有竞争力的性能，比基于自我注意的方法具有更少的参数。
+
+## Advancing Vision Transformers with Group-Mix Attention  
+代码开源
+> Ge C, Ding X, Tong Z, et al. Advancing Vision Transformers with Group-Mix Attention[J]. arXiv preprint arXiv:2311.15157, 2023.(香港大学， 腾讯AI Lab，蚂蚁，北京大学，香港中文大学，复旦人工智能研究所)  
+
+### Abstract
+Vision Transformers (ViTs) have been shown to enhance visual recognition through modeling long-range dependencies with multi-head self-attention (MHSA), which is typically formulated as Query-Key-Value computation. However, the attention map generated from the Query and Key captures only token-to-token correlations at one single granularity. In this paper, we argue that self-attention should have a more comprehensive mechanism to capture correlations among tokens and groups (i.e., multiple adjacent tokens) for higher representational capacity. Thereby, we propose Group-Mix Attention (GMA) as an advanced replacement for traditional self-attention, which can simultaneously capture token-to-token, token-to-group, and group-to-group correlations with various group sizes. To this end, GMA splits the Query, Key, and Value into segments uniformly and performs different group aggregations to generate group proxies. The attention map is computed based on the mixtures of tokens and group proxies and used to re-combine the tokens and groups in Value. Based on GMA, we introduce a powerful backbone, namely GroupMixFormer, which achieves state-of-the-art performance in image classification, object detection, and semantic segmentation with fewer parameters than existing models. For instance, GroupMixFormer-L (with 70.3M parameters and 3842 input) attains 86.2% Top1 accuracy on ImageNet-1K without external data, while GroupMixFormer-B (with 45.8M parameters) attains 51.2% mIoU on ADE20K. Codes and trained models are released in https://github.com/AILab-CVC/GroupMixFormer.  
+
+视觉变压器(vit)已被证明可以通过模拟多头自我注意(MHSA)的远程依赖性来增强视觉识别，多头自我注意通常被公式化为查询键值计算。然而，从查询和关键字生成的注意力图仅在一个单一的粒度上捕获标记到标记的相关性。在本文中，我们认为自我注意应该有一个更全面的机制来捕捉表征和组(即多个相邻的表征)之间的相关性，以获得更高的表征能力。因此，我们提出群组混合注意(GMA)作为传统自我注意的高级替代，它可以同时捕捉不同群组大小的令牌对令牌、令牌对群组以及群组对群组的相关性。为此，GMA将查询、键和值统一分割成段，并执行不同的组聚合来生成组代理。注意力图是基于令牌和组代理的混合来计算的，并用于在值上重新组合令牌和组。基于GMA，我们引入了一个强大的主干，即GroupMixFormer，它以比现有模型更少的参数在图像分类、对象检测和语义分割方面实现了最先进的性能。例如，在没有外部数据的情况下，GroupMixFormer-L(具有70.3M参数和3842个输入)在ImageNet-1K上达到86.2%的Top1准确度，而GroupMixFormer-B(具有45.8M参数)在ADE20K上达到51.2%的mIoU。代码和经过训练的模型在[代码地址](https://github.com/AILab-CVC/GroupMixFormer)发布
 
 
+### 动机  
+In this paper, we argue that self-attention should have a more comprehensive mechanism to capture correlations among tokens and groups (i.e., multiple adjacent tokens) for higher representational capacity. Thereby, we propose Group-Mix Attention (GMA) as an advanced replacement for traditional self-attention, which can simultaneously capture token-to-token, token-to-group, and group-to-group correlations with various group sizes.   
 
 
+### GroupMixAttention  
+![](img/mk-2023-12-11-20-32-29.png)  
+![](img/mk-2023-12-11-20-32-59.png)
+![](img/mk-2023-12-11-20-33-08.png)  
+![](img/mk-2023-12-11-20-33-18.png) 
+![](img/mk-2023-12-11-20-33-32.png)
 
 
+## Neighborhood Attention Transformer  
+>Hassani A, Walton S, Li J, et al. Neighborhood attention transformer[C]//Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2023: 6185-6194.(Meta)
+
+### Abstract  
+We present Neighborhood Attention (NA), the first efficient and scalable sliding window attention mechanism for vision. NA is a pixel-wise operation, localizing self attention (SA) to the nearest neighboring pixels, and therefore enjoys a linear time and space complexity compared to the quadratic complexity of SA. The sliding window pattern allows NA’s receptive field to grow without needing extra pixel shifts, and preserves translational equivariance, unlike Swin Transformer’s Window Self Attention (WSA). We develop N AT T EN (Neighborhood Attention Extension), a Python package with efficient C++ and CUDA kernels, which allows NA to run up to 40% faster than Swin’s WSA while using up to 25% less memory. We further present Neighborhood Attention Transformer (NAT), a new hierarchical transformer design based on NA that boosts image classification and downstream vision performance. Experimental results on NAT are competitive; NAT-Tiny reaches 83.2% top-1 accuracy on ImageNet, 51.4% mAP on MSCOCO and 48.4% mIoU on ADE20K, which is 1.9% ImageNet accuracy, 1.0% COCO mAP, and 2.6% ADE20K mIoU improvement over a Swin model with similar size. To support more research based on sliding window attention, we open source our project and release our checkpoints.  
 
 
+我们提出了邻域注意(NA)，第一个有效的和可扩展的视觉滑动窗口注意机制。NA是一种基于像素的操作，将自我关注定位到最近的相邻像素，因此与自我关注的二次复杂度相比，具有线性的时间和空间复杂度。与Swin Transformer的窗口自关注(WSA)不同，滑动窗口模式允许NA的感受野在不需要额外像素移位的情况下增长，并保持平移等方差。我们开发了N AT T EN(Neighborhood Attention Extension)，这是一个具有高效C++和CUDA内核的Python包，它允许NA的运行速度比Swin的WSA快40%,同时使用的内存少25%。我们还提出了邻域注意力转换器(NAT)，这是一种基于NA的新的分层转换器设计，可以提高图像分类和下游视觉性能。NAT上的实验结果是有竞争力的；NAT-Tiny在ImageNet上达到83.2%的顶级准确性，在MSCOCO上达到51.4%的mAP，在ADE20K上达到48.4%的mIoU，与类似大小的Swin模型相比，其ImageNet准确性提高了1.9%，COCO mAP提高了1.0%，ADE20K mIoU提高了2.6%。为了支持更多基于滑动窗口注意力的研究，我们开源了我们的项目并发布了我们的检查点。
 
 
+### 动机  
+ViT二次复杂度，token越多，复杂度越大，并且失去了卷积的归纳偏置。  
+
+### Method  
+![](img/mk-2023-12-15-01-56-17.png)
+
+## DyConvMixer: Dynamic Convolution Mixer Architecture for Open-Vocabulary Keyword Spotting  
+>Gharbieh W, Huang J, Wan Q, et al. DyConvMixer: Dynamic convolution mixer architecture for open-vocabulary keyword spotting[C]//Proc. Interspeech. 2022: 5205-5209.(LG)
+### Abstract  
+User-defined keyword spotting research has been gaining popularity in recent years. An open-vocabulary keyword spotting system with high accuracy and low power consumption remains a challenging problem. In this paper, we propose the DyConvMixer model for tackling the problem. By leveraging dynamic convolution alongside a convolutional equivalent of the MLPMixer architecture, we obtain an efficient and effective model that has less than 200K parameters and uses less than 11M MACs. Despite the fact that our model is less than half the size of state-of-the-art RNN and CNN models, it shows competitive results on the publicly available Hey-Snips and HeySnapdragon datasets. In addition, we discuss the importance of designing an effective evaluation system and detail our evaluation pipeline for comparison with future work.  
+
+***Index Terms:Dynamic Convolution, Open-vocabulary Keyword Spotting, User-defined Keyword Spotting, Query-byExample, ConvMixer***
+
+近年来，用户定义的关键词识别研究越来越受欢迎。具有高准确度和低功耗的开放词汇关键词识别系统仍然是一个具有挑战性的问题。在本文中，我们提出了DyConvMixer模型来解决这个问题。通过利用动态卷积以及MLPMixer架构的卷积等价物，我们获得了一个高效且有效的模型，该模型具有少于200K的参数，并且使用少于11M的MAC。尽管我们的模型不到最先进的RNN和CNN模型的一半，但它在公开可用的Hey-Snips和HeySnapdragon数据集上显示了竞争结果。此外，我们讨论了设计一个有效的评估系统的重要性，并详细说明了我们的评估管道，以便与未来的工作进行比较
+
+### Method  
+![](img/mk-2023-12-20-16-34-08.png)  
+
+### Extrement  
+**Data:** 128个Mel滤波器，81维度MFCC， 帧长25ms,帧移12.5ms，特征形状玩为(通道，频率，时间)(1，81，81)（音频长度为1s），使用CMVN进行归一化。  
+CMVN: (Cepstral Mean Variance Normalization) 倒谱均值归一化是一种音频信号处理。它的目的是对音频信号的倒谱系数进行归一化，以减小不同说话人、不同录音条件下的变化，并提高特征的可比性和鲁棒性
+
+
+## SCConv: Spatial and Channel Reconstruction Convolution for Feature Redundancy 
+>Li J, Wen Y, He L. SCConv: Spatial and Channel Reconstruction Convolution for Feature Redundancy[C]//Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2023: 6153-6162.(华师，同济)  
+
+### Abstract  
+Convolutional Neural Networks (CNNs) have achieved remarkable performance in various computer vision tasks but this comes at the cost of tremendous computational resources, partly due to convolutional layers extracting redundant features. Recent works either compress well-trained large-scale models or explore well-designed lightweight models. In this paper, we make an attempt to exploit spatial and channel redundancy among features for CNN compression and propose an efficient convolution module, called SCConv (Spatial and Channel reconstruction Convolution), to decrease redundant computing and facilitate representative feature learning. The proposed SCConv consists of two units: spatial reconstruction unit (SRU) and channel reconstruction unit (CRU). SRU utilizes a separate-and-reconstruct method to suppress the spatial redundancy while CRU uses a split-transform-andfuse strategy to diminish the channel redundancy. In addition, SCConv is a plug-and-play architectural unit that can be used to replace standard convolution in various convolutional neural networks directly. Experimental results show that SCConv-embedded models are able to achieve better performance by reducing redundant features with significantly lower complexity and computational costs.
+
+卷积神经网络(CNN)在各种计算机视觉任务中取得了显著的性能，但这是以巨大的计算资源为代价的，部分原因是卷积层提取了冗余特征。最近的作品要么压缩训练有素的大规模模型，要么探索设计良好的轻量级模型。本文尝试利用特征间的空间和信道冗余进行CNN压缩，并提出了一种有效的卷积模块，称为SCConv(空间和信道重构卷积),以减少冗余计算并促进典型特征学习。提出的SCConv包括两个单元:空间重构单元(SRU)和信道重构单元(CRU)。SRU使用分离-重构方法来抑制空间冗余，而CRU使用分离-变换-融合策略来减少通道冗余。此外，SCConv是一个即插即用的架构单元，可用于直接取代各种卷积神经网络中的标准卷积。实验结果表明，SCConv嵌入式模型能够通过减少冗余特征来实现更好的性能，同时显著降低复杂度和计算成本。  
+### Method  
+![](img/mk-2023-12-24-20-47-48.png)
+![](img/mk-2023-12-24-20-47-55.png)
+![](img/mk-2023-12-24-20-48-10.png)
+
+### 文章中提到的卷积  
+#### ResNeXt(2017)
+[ResNeXt--知乎](https://zhuanlan.zhihu.com/p/32913695)  
+![](img/mk-2023-12-26-09-17-26.png)  
+![](img/mk-2023-12-26-09-25-06.png)  
+![](img/mk-2023-12-26-09-25-38.png)  
+
+#### Xception(2017)  
+[Xception--知乎](https://zhuanlan.zhihu.com/p/50897945)
+![](img/mk-2023-12-26-09-41-31.png)  
+
+#### MobileNet(2018)   
+[MobileNet--知乎](https://zhuanlan.zhihu.com/p/261110039)  
+基本上就是深度可分离卷积  
+
+#### ShuffleNet(2017)   
+动机：上面那些采用深度卷积的网络势必会用到点状卷积，但是点状卷积计算量太大了  
+[ShuffleNet--知乎](https://zhuanlan.zhihu.com/p/32304419)  
+![](img/mk-2023-12-28-10-43-20.png)  
+![](img/mk-2023-12-28-10-43-37.png)  
+
+#### HetConv(2019)  
+[HetConv--知乎](https://zhuanlan.zhihu.com/p/59075508)
+动机：![](img/mk-2023-12-28-11-57-21.png)  
+![](img/mk-2023-12-28-12-04-26.png)  
+
+#### TiedBlockConv(2020)  
+[Tied Block Convolution--知乎](https://zhuanlan.zhihu.com/p/297801114)  
+![](img/mk-2023-12-28-12-24-38.png)  
+![](img/mk-2023-12-28-12-48-00.png)  
+![](img/mk-2023-12-28-12-48-36.png)  
+![](img/mk-2023-12-28-12-47-43.png)  
+
+## MicroNet: Improving Image Recognition with Extremely Low FLOPs
+>Y. Li et al., "MicroNet: Improving Image Recognition with Extremely Low FLOPs," 2021 IEEE/CVF International Conference on Computer Vision (ICCV), Montreal, QC, Canada, 2021, pp. 458-467, doi: 10.1109/ICCV48922.2021.00052.
+
+[MicroNet--知乎](https://zhuanlan.zhihu.com/p/337107958)  
+代码: git clone https://github.com/liyunsheng13/micronet.git
+![](img/mk-2023-12-26-09-54-42.png) 
+
+#### 
 
 
 
