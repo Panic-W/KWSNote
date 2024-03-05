@@ -767,15 +767,19 @@ Convolutional Neural Networks (CNNs) have achieved remarkable performance in var
 [MobileNet--知乎](https://zhuanlan.zhihu.com/p/261110039)  
 基本上就是深度可分离卷积  
 
-#### ShuffleNet(2017)   
+#### ShuffleNet(2017)    
 动机：上面那些采用深度卷积的网络势必会用到点状卷积，但是点状卷积计算量太大了  
 [ShuffleNet--知乎](https://zhuanlan.zhihu.com/p/32304419)  
 ![](img/mk-2023-12-28-10-43-20.png)  
 ![](img/mk-2023-12-28-10-43-37.png)  
 
+#### ShuffleNet_v2(2018)  
+![](img/mk-2024-03-04-15-18-03.png)  
+
 #### HetConv(2019)  
-[HetConv--知乎](https://zhuanlan.zhihu.com/p/59075508)
-动机：![](img/mk-2023-12-28-11-57-21.png)  
+[HetConv--知乎](https://zhuanlan.zhihu.com/p/59075508)  
+动机：  
+![](img/mk-2023-12-28-11-57-21.png)  
 ![](img/mk-2023-12-28-12-04-26.png)  
 
 #### TiedBlockConv(2020)  
@@ -785,6 +789,26 @@ Convolutional Neural Networks (CNNs) have achieved remarkable performance in var
 ![](img/mk-2023-12-28-12-48-36.png)  
 ![](img/mk-2023-12-28-12-47-43.png)  
 
+******
+未汇报
+#### SPConv(参数小一点，性能提升非常有限，简单看一看)  
+卧槽，华师上边23年那一篇SCConv岂不是照着抄。。。。。。  
+![](img/mk-2024-01-16-15-48-02.png)
+
+#### Ghostnet(相对MobileNet少许提升,0.5%)(这篇文章讲故事的能力值得学习)
+卷积神经网络的特征冗余是指在卷积神经网络中，由于卷积层的滤波器数量较多，每个滤波器又会生成一个特征图，这些特征图之间可能存在冗余信息，即某些特征图提取的信息与其他特征图提取的信息重复或高度相关  
+ ![](img/mk-2024-01-16-16-44-11.png)  
+ 因为卷积中存在特征图冗余,所以想法就是使用线性操作用一部分特征图生成另一部分特征图,减少了卷积的使用,就减少了参数量和计算量.
+ 把常规卷积分成两步进行,第一步进行一半的卷积,第二部分进行深度卷积一对一生成另一半featuremap(就是所谓的线性操作),(其实和原始卷积得到的输出并不是特别一致)  
+ ![](img/mk-2024-01-16-16-57-41.png)  
+ 效果  
+ ![](img/mk-2024-01-16-16-58-14.png)
+
+#### SilmConv(没啥用,唯一的用处是写论文的时候写进综述那部分里)
+#### OctConv(提升很有限,不太行 )
+
+
+
 ## MicroNet: Improving Image Recognition with Extremely Low FLOPs
 >Y. Li et al., "MicroNet: Improving Image Recognition with Extremely Low FLOPs," 2021 IEEE/CVF International Conference on Computer Vision (ICCV), Montreal, QC, Canada, 2021, pp. 458-467, doi: 10.1109/ICCV48922.2021.00052.
 
@@ -792,13 +816,87 @@ Convolutional Neural Networks (CNNs) have achieved remarkable performance in var
 代码: git clone https://github.com/liyunsheng13/micronet.git
 ![](img/mk-2023-12-26-09-54-42.png) 
 
-#### 
+## SHViT Single-Head Vision Transformer with Memory Efficient Macro Design  
+> Yun S, Ro Y. SHViT: Single-Head Vision Transformer with Memory Efficient Macro Design[J]. arxiv preprint arxiv:2401.16456, 2024.
+
+### Abstract  
+Recently, efficient Vision Transformers have shown great performance with low latency on resource-constrained devices. Conventionally, they use 4×4 patch embeddings and a 4-stage structure at the macro level, while utilizing sophisticated attention with multi-head configuration at the micro level. This paper aims to address computational redundancy at all design levels in a memory-efficient manner. We discover that using larger-stride patchify stem not only reduces memory access costs but also achieves competitive performance by leveraging token representations with reduced spatial redundancy from the early stages. Furthermore, our preliminary analyses suggest that attention layers in the early stages can be substituted with convolutions, and several attention heads in the latter stages are computationally redundant. To handle this, we introduce a single-head attention module that inherently prevents head redundancy and simultaneously boosts accuracy by parallelly combining global and local information. Building upon our solutions, we introduce SHViT, a SingleHead Vision Transformer that obtains the state-of-the-art speed-accuracy tradeoff. For example, on ImageNet-1k, our SHViT-S4 is 3.3×, 8.1×, and 2.4× faster than MobileViTv2 ×1.0 on GPU, CPU, and iPhone12 mobile device, respectively, while being 1.3% more accurate. For object detection and instance segmentation on MS COCO using MaskRCNN head, our model achieves performance comparable to FastViT-SA12 while exhibiting 3.8× and 2.0× lower backbone latency on GPU and mobile device, respectively.
+
+近期，高效的视觉 Transformer 在资源受限的设备上展现出优异的低延迟性能。传统上，它们在宏观层面上采用4×4的块嵌入和4阶段结构，同时在微观层面上使用具有多头配置的复杂注意力机制。
+
+本文旨在以节省内存的方式解决所有设计层面的计算冗余问题。作者发现，使用更大步长的块状处理初始部分不仅能降低内存访问成本，还通过利用早期阶段减少空间冗余的 Token 表示来达到具有竞争力的性能。此外，作者初步分析表明，早期阶段的注意力层可以用卷积替代，且后期阶段有许多注意力头在计算上是冗余的。为了处理这个问题，作者引入了一个单头注意力模块，它内在地防止了头冗余，并通过并行组合全局和局部信息同时提高准确性。
+
+基于作者的解决方案，作者提出了SHViT，一个单头视觉 Transformer ，它获得了最佳的速率-精度权衡。例如，在ImageNet-1k上，SHViT-S4在GPU、CPU和iPhone12移动设备上分别比MobileViTv2 ×1.0快3.3倍、8.1倍和2.4倍，同时精度高出1.3%。
+
+对于在MS COCO上进行目标检测和实例分割，使用Mask-RCNN Head ，SHViT在GPU和移动设备上的 Backbone 延迟分别比FastViT-SA12低3.8倍和2.0倍，同时表现出与之相当的性能。
+
+### Introduction  
+动机： 
+- 早期阶段存在大量空间冗余。（即patch片可以取得更大而不影响性能）
+- 多头机制中存在明显冗余，特别是在后期阶段。（通道层面）  
+
+思路：  
+作者提出了一种新颖的单头自注意力（SHSA）作为竞争性替代方案，以减少计算冗余。在SHSA中，单头自注意力仅应用于输入通道的一个子集，而其余通道保持不变。SHSA层不仅消除了由多头机制产生的计算冗余，还通过处理部分通道降低了内存访问成本。此外，这些效率使得可以在不增加计算预算的情况下堆叠更多块并扩大宽度，从而在同一计算预算内提高性能。  
+
+基于这些发现，作者引入了一种基于内存高效设计原则的单头视觉 Transformer （SHViT），作为在多种设备上运行速度极快的新一类网络。实验证明，SHViT在速度和准确性方面为分类、检测和分割任务达到了最先进的表现
+
+贡献：  
+- 作者对大部分现有研究中被忽视的冗余进行了系统分析，并提出了内存高效的设计原则来解决这个问题。
+- 作者引入了单头Vision Transformer（SHViT），它在各种设备（如GPU、CPU和iPhone移动设备）上都能取得良好的准确度与速度的平衡。
+- 作者针对各种任务进行了广泛的实验，并验证了SHViT在高速和有效性方面的高性能。
+
+### Analysis  
+其实取大patch块对于语音来说意义不大，之前KWT证明了每个时间步所有频率特征作为一个token是很合适的。
+
+MHSA层在多个子空间（头）中独立计算并应用注意力图，这已一致显示出性能的增强。然而，尽管注意力图在计算上要求较高，但最近的研究表明，其中许多并不是至关重要。  
+
+首先，在早期阶段（图3（a）），作者观察到表现最佳的头（heads）倾向于以卷积方式操作，而在移除后对性能影响最小的头通常更全局地处理信息。
+
+此外，如图2（b）所示，与在第一阶段使用深度卷积层的模型相比，在第一阶段使用注意力层的模型在速度-准确度权衡上表现较差。因此，为了效率，作者在初始阶段使用带有空间归纳偏置的卷积作为Token混合器（token mixer）。
+
+在后期阶段，作者发现特性和预测层面上都存在很多冗余。例如，DeiT-T（图3（b））的后阶段显示出平均 Head 相似度为78.3%（6个 Head 的相似度为64.8%），Swin-T也表现出显著的高值（图4左侧）。在移除一个 Head 的实验中，作者观察到大部分 Head 可以被移除，而不会与原始准确度偏离太远。
+
+先前的方法通常首先完全训练网络，然后剪除不必要的 Head 以解决 Head 冗余问题。尽管这些方法有效，但它们在训练过程中以增加计算资源和内存占用为代价。为了高效地解决上述问题，作者设计了一个单头注意模块，从本质上避免 Head 冗余。这种方法确保训练和推理过程都得到简化和高效
+
+### Method  
+![](img/mk-2024-02-26-10-43-25.png)  
+
+好反直觉↓    
+![](img/mk-2024-02-26-10-51-09.png)  
+
+![](img/mk-2024-02-26-10-52-30.png)
+
+![](img/mk-2024-02-26-10-57-01.png)  
+### Experiments  
+![](img/mk-2024-02-26-11-00-04.png)
+
+要注意其中提到的高效ViT↓  
+![](img/mk-2024-02-26-11-01-29.png)
 
 
+## Automatic Audio Feature Extraction for Keyword Spotting
+>Vitolo P, Liguori R, Di Benedetto L, et al. Automatic Audio Feature Extraction for Keyword Spotting[J]. IEEE Signal Processing Letters, 2023.  
+
+### Abstract  
+The accuracy and computational complexity of keyword spotting (KWS) systems are heavily influenced by the choice of audio features in speech signals. This letter introduces a novel approach for audio feature extraction in KWS by leveraging a convolutional autoencoder, which has not been explored in the existing literature. Strengths of the proposed approach are in the ability to automate the extraction of the audio features, keep its computational complexity low, and allow accuracy values of the overall KWS systems comparable with the state of the art. To evaluate the effectiveness of our proposal, we compared it with the widely-used Mel Frequency Cepstrum (MFC) method in terms of classification metrics in noisy conditions and the number of required operators, using the public Google speech command dataset. Results demonstrate that the proposed audio feature extractor achieves an average classification accuracy on 12 classes ranging from 81.84% to 90.36% when the signal-to-noise ratio spans from 0 to 40 dB, outperforming the MFC up to 5.2%. Furthermore, the required number of operations is one order of magnitude lower than that of the MFC, resulting in a reduction in computational complexity and processing time, which makes it well-suited for integration with KWS systems in resource-constrained edge devices.  
 
 
+关键词识别（KWS）系统的准确性和计算复杂性受到语音信号中音频特征选择的严重影响。这封信介绍了一种利用卷积自动编码器在KWS进行音频特征提取的新方法，这在现有文献中尚未探索。所提出的方法的优势在于能够自动提取音频特征，保持其计算复杂性较低，并允许整个KWS系统的精度值与最先进的水平相当。为了评估我们的建议的有效性，我们使用公共谷歌语音命令数据集，在噪声条件下的分类度量和所需操作数方面将其与广泛使用的梅尔频率倒谱（MFC）方法进行了比较。结果表明，当信噪比从0到40 dB时，所提出的音频特征提取器在12个类别上的平均分类准确率从81.84%到90.36%不等，优于MFC高达5.2%。此外，所需的操作数量比MFC低一个数量级，从而降低了计算复杂性和处理时间，这使其非常适合与资源受限的边缘设备中的KWS系统集成。
 
+### Introduction  
+mfcc等需要进行傅里叶变换的特征计算量太大，文章提出一个基于卷积的特征提取器，输入是信号，输出是特征，需要单独训练。在信噪比40时，略低于MFCC效果，但信噪比低于30db时，效果比MFCC好。
 
+### Method  
+由编码器和解码器组成，训练完成后单独使用编码器。
+![](img/mk-2024-03-04-15-02-42.png)  
+模型结构以及参数↓  
+![](img/mk-2024-03-04-15-06-52.png)  
+![](img/mk-2024-03-04-15-07-05.png)
+
+### Result  
+![](img/mk-2024-03-04-15-11-30.png)  
+![](img/mk-2024-03-04-15-11-43.png)  
+![](img/mk-2024-03-04-15-11-52.png)  
 
 
 
