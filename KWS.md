@@ -1,3 +1,48 @@
+
+***
+<style>
+    img {
+        width: 50%; /* 图片宽度 */
+        border: 1px solid #ccc; /* 边框样式 */
+        border-radius: 5px; /* 边框圆角 */
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* 阴影效果 */
+        /* 图片居中显示 */
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+
+### WAVELET2VEC: A FILTER BANK MASKED AUTOENCODER FOR EEG-BASED SEIZURE SUBTYPE CLASSIFICATIO
+
+**任务**：癫痫亚型分类
+
+**思路**：
+
+提出Wavelet2Vec结构（DWPT滤波 + ViT + MAE）
+
+**方法**：
+
+1. DWPT滤波
+先使用DWPT滤波器对EEG的原始信号进行滤波，提取出多个频带
+Raw Data: `(B, C, 1, T) --> (B, 6, C, 1, T)`
+>DWPT原本是用于运动想象任务的一种滤波器
+
+2. 划分patch：
+随后在`C * T`上通过一维卷积划分patch：`(B, 6, C, 1, T) --> (B, 6, 1, C * T) --> (B, 6, dim_embed, num_patch)`
+
+1. MAE
+然后随机掩码10%的patch，预训练Encoder
+
+1. 情感分类（微调Encoder）
+全连接层
+
+整体结构：
+<figure>
+< img style="width: 80%" src="image-7.png">
+</figure>
+******
+
 # 语音关键词检测算法
 ***
 >以下内容来自《基于神经网络的语音关键词检索方法研究》（电子科技大学硕士毕业论文）
@@ -13,7 +58,7 @@ Keyword Spotting 指的是语音设备控制这一类应用，一般来说它的
 - ***基于端到端神经网络的关键词检测方法***
 
 ## 性能评价指标
-### 1.Term Weighted Value (TWV)（好像并不是特别普及）
+### 1.Term Weighted Value (TWV)（好像并不是特别普及）b
 ![](img/mk-2023-08-04-14-49-31.png)
 - 命中(Hit):若系统检出的关键词 (黄色线条) 的中间位置处于待检测音频中关键词真实位置 (蓝色线条)左右 0.5s 的时间范围内，称检出关键词为命中。
 - 误报(FalseAlarm):对于每个待检测音频中的关键词，系统有且只有一个检出，若检出关键词的中间位置处于待检测音频中关键词真实位置左右 0.5s 范围之外，称为误报。
@@ -897,6 +942,531 @@ mfcc等需要进行傅里叶变换的特征计算量太大，文章提出一个�
 ![](img/mk-2024-03-04-15-11-30.png)  
 ![](img/mk-2024-03-04-15-11-43.png)  
 ![](img/mk-2024-03-04-15-11-52.png)  
+
+## Low-Power Feature-Attention Chinese Keyword Spotting Framework with Distillation Learning
+>Lei L, Yuan G, Zhang T, et al. Low-Power Feature-Attention Chinese Keyword Spotting Framework with Distillation Learning[J]. ACM Transactions on Asian and Low-Resource Language Information Processing, 2022, 22(2): 1-14.  
+
+
+### Abstract  
+In this paper, we propose a novel Low-Power Feature-Attention Chinese Keyword Spotting Framework based on a depthwise separable convolution neural network (DSCNN) with distillation learning to recognize speech signals of Chinese wake-up words. The framework consists of a low-power feature-attention acoustic model and its learning methods. Different from the existing model, the proposed acoustic model based on connectionist temporal classification (CTC) focuses on the reduction of power consumption by reducing model network parameters and multiply-accumulate (MAC) operations through our designed featureattention network and DSCNN. In particular, the feature-attention network is specially designed to extract effective syllable features from a large number of MFCC features. This could refine MFCC features by selectively focusing on important speech signal features and removing invalid speech signal features to reduce the number of speech signal features, which helps to significantly reduce the parameters and MAC operations of the whole acoustic model. Moreover, DSCNN with fewer parameters and MAC operations compared with traditional convolution neural networks is adopted to extract effective high-dimensional features from syllable features. Furthermore, we apply a distillation learning algorithm to efficiently train the proposed lowpower acoustic model by utilizing the knowledge of the trained large acoustic model. Experimental results thoroughly verify the effectiveness of our model and show that the proposed acoustic model still has better accuracy than other acoustic models with the lowest power consumption and smallest latency measured by NVIDIA JETSON TX2. It has only 14.524KB parameters and consumes only 0.141J energy per query and 17.9ms latency on the platform, which is hardware-friendly.
+
+本文提出了一种基于深度可分离卷积神经网络（DSCNN）和蒸馏学习的低功耗特征注意力中文关键词识别框架，用于识别中文唤醒词的语音信号。该框架由一个低功耗特征注意力声学模型及其学习方法组成。与现有模型不同，提出的基于连接主义时间分类（CTC）的声学模型通过我们设计的特征注意力网络和DSCNN，通过减少模型网络参数和乘累加（MAC）操作来降低功耗。特别地，特征注意力网络被专门设计用于从大量MFCC特征中提取有效的音节特征。这可以通过选择性地关注重要的语音信号特征并移除无效的语音信号特征以减少语音信号特征的数量来细化MFCC特征，这有助于显著减少整个声学模型的参数和MAC运算。此外，与传统卷积神经网络相比，DSCNN采用了更少的参数和MAC运算来从音节特征中提取有效的高维特征。此外，我们应用蒸馏学习算法通过利用经训练的大声学模型的知识来有效地训练所提出的低功率声学模型。实验结果彻底验证了我们模型的有效性，并表明所提出的声学模型仍然具有比NVIDIA JETSON TX2测量的最低功耗和最小延迟的其他声学模型更好的准确性。它只有14.524KB的参数，每个查询仅消耗0.141J的能量，平台上的延迟为17.9ms，这是硬件友好的。
+
+### Method  
+特征注意力机制（有点像SE模块）（这点也许可以借鉴），自动学习特征中有用的部分。  
+卷积网络建模，输出五个音节的概率矩阵，CTC解码。
+蒸馏训练。
+![](img/mk-2024-03-05-16-49-21.png)  
+![](img/mk-2024-03-05-16-54-59.png)  
+![](img/mk-2024-03-05-16-55-45.png)  
+特征提取和建模过程  
+![](img/mk-2024-03-05-16-56-38.png)  
+
+
+## Maximum-Entropy Adversarial Audio Augmentation for Keyword Spotting  
+>Ye Z, Ciccarelli G, Kulis B. Maximum-Entropy Adversarial Audio Augmentation for Keyword Spotting[J]. arXiv preprint arXiv:2401.06897, 2024.  
+
+### Abstract  
+Data augmentation is a key tool for improving the performance of deep networks, particularly when there is limited labeled data. In some fields, such as computer vision, augmentation methods have been extensively studied; however, for speech and audio data, there are relatively fewer methods developed. Using adversarial learning as a starting point, we develop a simple and effective augmentation strategy based on taking the gradient of the entropy of the outputs with respect to the inputs and then creating new data points by moving in the direction of the gradient to maximize the entropy. We validate its efficacy on several keyword spotting tasks as well as standard audio benchmarks. Our method is straightforward to implement, offering greater computational efficiency than more complex adversarial schemes like GANs. Despite its simplicity, it proves robust and effective, especially when combined with the established SpecAugment technique, leading to enhanced performance.  
+
+
+数据扩充是提高深度网络性能的关键工具，尤其是在标记数据有限的情况下。在一些领域，如计算机视觉，增强方法已被广泛研究；然而，对于语音和音频数据，开发的方法相对较少。使用对抗性学习作为起点，我们开发了一种简单有效的增强策略，该策略基于获取输出相对于输入的熵的梯度，然后通过沿梯度方向移动以最大化熵来创建新的数据点。我们在几个关键词识别任务和标准音频基准测试中验证了其功效。我们的方法易于实现，比更复杂的对抗方案（如GANs）提供更高的计算效率。尽管它很简单，但它被证明是稳健而有效的，尤其是在与已建立的SpecAugment技术结合使用时，从而提高了性能。  
+
+### 语音常见数据增强方法  
+In the raw audio domain, common methods include time shifting, time stretching, pitch scaling, noise addition, impulse response addition, filters, polarity inversion, and random gain. In the time-frequency domain with spectrograms, some similar ideas have been pursued (e.g., pitch shifting, time shifting, or time stretching), but the most widely adopted augmentation method is SpecAugment.  
+
+在原始音频领域，常见的方法包括时移、时间拉伸、音高缩放、噪声添加、脉冲响应添加、滤波器、极性反转和随机增益。在频谱图的时频域中，已经采用了一些类似的想法（例如，音高移位、时移或时间拉伸），但最广泛采用的增强方法是SpecAugment。  
+
+### Method  
+提出了一种新颖的简单的音频增强技术，计算开销不大。  
+计算softmax输出的熵，取熵相对于x的梯度，然后沿梯度方向移动x（梯度上升）以最大化熵。这产生了用于后续训练的新数据点。  
+![](img/mk-2024-03-06-19-46-37.png)  
+![](img/mk-2024-03-06-19-33-20.png)  
+算法流程：
+![](img/mk-2024-03-06-19-48-06.png)  
+### Result  
+![](img/mk-2024-03-06-19-50-36.png)
+
+
+---
+24.3.8--24.3.14
+## A Comprehensive Review of Spiking Neural Networks: Interpretation, Optimization, Efficiency, and Best Practices  
+> Malcom K, Casco-Rodriguez J. A comprehensive review of spiking neural networks: Interpretation, optimization, efficiency, and best practices[J]. arXiv preprint arXiv:2303.10780, 2023.  
+
+### Abstract  
+Biological neural networks continue to inspire breakthroughs in neural network performance. And yet, one key area of neural computation that has been under-appreciated and underinvestigated is biologically plausible, energyefficient spiking neural networks, whose potential is especially attractive for low-power, mobile, or otherwise hardware-constrained settings. We present a literature review of recent developments in the interpretation, optimization, efficiency, and accuracy of spiking neural networks. Key contributions include identification, discussion, and comparison of cutting-edge methods in spiking neural network optimization, energy-efficiency, and evaluation, starting from first principles so as to be accessible to new practitioners.  
+
+生物神经网络继续激发神经网络性能的突破。然而，神经计算的一个关键领域一直未得到充分重视和研究，这就是生物上看似合理的高能效脉冲神经网络，它的潜力对于低功耗、移动或其他硬件受限的设置尤其具有吸引力。我们对脉冲神经网络的解释、优化、效率和准确性的最新发展进行了文献综述。主要贡献包括识别、讨论和比较尖峰神经网络优化、能效和评估中的前沿方法，从基本原则开始，以便新从业者可以访问。  
+
+### Introduce  
+脉冲神经网络（SNNs）提供了一种不同于传统人工神经网络（ANNs）的机器学习视角:SNNs以一系列离散时间脉冲编码数据，模仿生物大脑中神经元产生的动作电位。  
+
+### Foundational Neurobiology  
+***神经元***是大脑的基本原子单位。在人类中，有三种主要类型的神经元:感觉神经元、运动神经元和中间神经元。由庞大的胞体（即细胞体）、分支树突（将从相邻细胞接收的刺激传播到胞体）和与相邻神经元树突形成突触连接的长轴突组成。
+
+***突触***是轴突末梢和树突之间的空间，突触前神经元通过突触向突触后神经元发送生物信号。突触活动通常由化学信号或电信号组成。
+
+***动作电位***（APs）是生物神经元进行交流的离散信号（尖峰信号）。每个AP都是一个连续的去极化事件链:轴突上的一个片段经历膜电位（跨膜电压）的上升和下降，这种上升和下降沿轴突传播。膜电位的急剧下降被称为超极化
+
+*Important terminology borrowed from
+biology includes the idea of a spike train (the time indices
+at which spikes occurred for a given neuron) and firing (the
+creation/propagation of an AP). Note that APs are synonymous with spikes for this discussion*
+
+### Biological Plausibility and Interpretability
+传统的人工神经网络使用浮点数来编码神经元之间的信息传输，而生物神经元通过动作电位进行通信。假设动作电位出现和衰减很快，它们可以近似为离散的二进制尖峰；当考虑到稀疏性时，信息可以通过高度稀疏的二进制向量来传输，而不是依赖于任意精确的浮点数。  
+
+频率编码和延迟编码(延迟编码实现最大精度同时仍保持低能耗)  
+
+***Leaky Integrate-and-Fire Modeling***
+脉冲神经网络通常被建模和理解为泄漏积分和发射（LIF）神经元的网络
+![](img/mk-2024-03-11-11-34-20.png)  
+
+### Optimization  
+*脉冲神经网络是离散的，不可微分。*  
+
+*通过时间反向传播：*  
+训练SNNs的两种最流行的方法是影子训练和时间反向传播（BPTT）。前者包括训练SNN作为预训练人工神经网络的近似；尽管这种方法有利于在静态任务（如图像分类）中达到有竞争力的性能，但由于其固有的低效率（需要训练两个网络）及其对SNNs的时间动态的利用不足。阴影训练将不是本次审查的重点。后一种方法（BPTT）源于递归神经网络（RNN）优化，并成为SNN训练的必要方法，因为每个神经元的膜电位随着时间的推移而衰减，这与人工神经网络神经元的激活不同
+![](img/mk-2024-03-11-21-55-52.png)  
+
+代理梯度。与人工神经网络不同，人工神经网络使用尖峰信号来执行计算。设s表示尖峰活动，梯度∂L ∂W的计算采用∂L ∂S乘以构成∂S ∂W.的附加项（通过链式法则）的形式。然而，由于作为突触权重w的函数的尖峰活动s涉及亥维赛德阶跃函数，导数∂S ∂W包含表现不佳的狄拉克-德尔塔函数。作为非平滑尖峰非线性的松弛，替代梯度被用作反向传播过程中亥维赛德阶跃函数导数的替代方法（Neftci等人，2019年）。SNN优化的代理梯度选择不是唯一的，但最近的工作表明，snn对代理梯度的选择是稳健的（曾克和沃格尔斯，2021年）。   
+![](img/mk-2024-03-11-22-00-01.png)  
+
+训练SNNs最常见的学习规则之一是反向传播，模拟为简单正向传递的反向。然而，反向传播方法，如通过时间的反向传播（BPTT），在生物学上是不合理的（洪斯伯格，埃里克，2018年），是内存密集型的，并且与神经形态硬件不完全兼容，而是需要在普通硬件上进行计算密集型训练。本节探讨反向传播的最新扩展或替代方案。  
+
+Online Training Through Time.BPTT的另一个替代方案是锋电位时序相关可塑性（STDP），这是一个学习框架，其起源不是优化，而是对神经可塑性的实验观察。与事件驱动的优化不同，STDP是无监督的，不使用梯度下降或反向传播，而是单独根据突触前和突触后神经元尖峰之间的相对时序来确定每个神经元之间的突触连接强度（Eshraghian等人，2021年）。这种学习规则通常被称为Hebbian学习方法（Caporale & Dan，2008），其特征是一起放电的神经元连接在一起的原理（Eshraghian等人，2021）。  
+
+Online Training Through Time.通过时间的传统反向传播的一个潜在替代方案是事件驱动优化，特别是关于尖峰时序的反向传播（Bohte等人，2002年）。
+
+Online Training Through Time.线时间训练（OTTT），与传统的SNN优化不同，它没有使用代理梯度。相反，作者利用了尖峰活动梯度几乎在所有地方都自然为零的事实来逼近  
+
+Implicit Differentiation. 作为通过训练的前馈SNNs的另一种替代方法，肖等人（2021）提出了反馈脉冲神经网络（FSNNs），这是一种具有递归连接的SNNs，并提出了平衡状态的隐式微分（IDE）作为训练它们的方法。
+
+### Energy Efficiency  
+
+***Low-Power Applications and Constraints***
+只有在为利用SNNs固有优势而构建的硬件上运行时，才能从SNNs中受益。例如它们的稀疏性和对并行计算的倾向。神经形态处理器通过采用大规模并行性、异步事件驱动操作和更高分布、更易于访问的内存，偏离了当今通用CPU的传统冯·诺依曼架构
+
+***Low-Power Applications and Constraints***  
+与传统的人工神经网络实施相比，能耗已被证明减少了多达3个数量级，这主要归功于尖峰活动、稀疏性和静态数据抑制（事件驱动处理）
+
+在人工神经网络中，对神经元的加权输入求和需要MAC运算（例如每个输入一次MAC运算），而对于SNNs，尖峰依赖于每个输入更便宜的AC运算。作为比较，一个保守的估计是三次AC操作相当于一次MAC操作（Liao等人，2022年）。请注意，SNNs需要在每个时间步更新其膜电位，这说明每个神经元有一个额外的MAC操作，这与每个神经元的每个输入都有一个MAC操作的ann相反。
+
+读完了，好像没什么收获。。。。。。
+
+## SpecAugment: A Simple Data Augmentation Method for Automatic Speech Recognition  
+>Park D S, Chan W, Zhang Y, et al. Specaugment: A simple data augmentation method for automatic speech recognition[J]. arXiv preprint arXiv:1904.08779, 2019.  
+
+### Abstract  
+We present SpecAugment, a simple data augmentation method for speech recognition. SpecAugment is applied directly to the feature inputs of a neural network (i.e., filter bank coefficients). The augmentation policy consists of warping the features, masking blocks of frequency channels, and masking blocks of time steps. We apply SpecAugment on Listen, Attend and Spell networks for end-to-end speech recognition tasks. We achieve state-of-the-art performance on the LibriSpeech 960h and Swichboard 300h tasks, outperforming all prior work. On LibriSpeech, we achieve 6.8% WER on test-other without the use of a language model, and 5.8% WER with shallow fusion with a language model. This compares to the previous stateof-the-art hybrid system of 7.5% WER. For Switchboard, we achieve 7.2%/14.6% on the Switchboard/CallHome portion of the Hub5’00 test set without the use of a language model, and 6.8%/14.1% with shallow fusion, which compares to the previous state-of-the-art hybrid system at 8.3%/17.3% WER.  
+
+我们提出SpecAugment，一种用于语音识别的简单数据扩充方法。SpecAugment直接应用于神经网络的特征输入（即滤波器组系数）。扩充策略包括扭曲特征、屏蔽频率信道块和屏蔽时间步长块。我们在Listen、Attend和Spell网络上应用SpecAugment进行端到端语音识别任务。我们在LibriSpeech 960h和Swichboard 300h任务上取得了一流的性能，超过了所有先前的工作。在LibriSpeech上，我们在不使用语言模型的情况下在test-other上实现了6.8%的WER，在使用语言模型的情况下实现了5.8%的WER。相比之下，以前最先进的混合动力系统的7.5% WER。对于Switchboard，我们在不使用语言模型的情况下在hub 5‘00测试集的Switchboard/CallHome部分取得了7.2%/14.6%的成绩，在使用浅层融合的情况下取得了6.8%/14.1%的成绩，而之前最先进的混合系统的WER为8.3%/17.3%。  
+
+
+### 
+需要关注的点：使用learning rate schedules,上升，保持，下降到最大点的百分之一，然后***保持不变***  
+![](img/mk-2024-03-15-21-56-27.png)  
+学习率保持阶段(高峰阶段)加噪声？  
+![](img/mk-2024-03-15-22-01-32.png)  
+![](img/mk-2024-03-15-22-01-42.png)  
+三十二万轮卧槽，超乎想象
+
+## Aware: intuitive device activation using prosody for natural voice interactions
+>Zhang X, Su Z, Rekimoto J. Aware: intuitive device activation using prosody for natural voice interactions[C]//Proceedings of the 2022 CHI Conference on Human Factors in Computing Systems. 2022: 1-16.
+
+### Abstract  
+Voice interactive devices often use keyword spotting for device activation. However, this approach sufers from misrecognition of keywords and can respond to keywords not intended for calling the device (e.g., "You can ask Alexa about it."), causing accidental device activations. We propose a method that leverages prosodic features to diferentiate calling/not-calling voices (F1 score: 0.869), allowing devices to respond only when called upon to avoid misactivation. As a proof of concept, we built a prototype smart speaker called Aware that allows users to control the device activation by speaking the keyword in specifc prosody patterns. These patterns are chosen to represent people’s natural calling/not-calling voices, which are uncovered in a study to collect such voices and investigate their prosodic diference. A user study comparing Aware with Amazon Echo shows Aware can activate more correctly (F1 score 0.93 vs. 0.56 ) and is easy to learn and use.  
+
+
+语音交互设备通常使用关键字识别来激活设备。然而，这种方法避免了对关键词的错误识别，并且可以对不是用于呼叫设备的关键词做出响应（例如，“你可以向Alexa询问此事。”），导致设备意外激活。我们提出了一种利用韵律特征区分呼叫/非呼叫语音的方法（F1得分:0.869），允许设备仅在被呼叫时做出响应以避免误激活。作为概念验证，我们构建了一个名为Aware的智能扬声器原型，允许用户通过以特定韵律模式说出关键词来控制设备激活。这些模式被选择来代表人们自然的呼唤/非呼唤声音，这是在一项收集这些声音并调查其韵律差异的研究中发现的。一项比较Aware和Amazon Echo的用户研究显示，Aware可以更正确地激活（F1得分为0.93比0.56），并且易于学习和使用。  
+
+### Prosodic Features  
+对于语调（在以下内容中可与音高或音高变化互换使用），我们使用在话语的不同时间点通过基频（F0）测量的音高来描述它。类似地测量话语的强度变化（通过在多个时间点采样）。对于话语的持续时间，我们使用语音识别获得的时间对齐来表示它（以毫秒为单位）。  
+要找一下这部分的特征一般怎么提取  
+
+CNN的架构基于EfNet【19】。我们保留输入特征的音高、HNR和强度序列的原始长度。批量填充后，持续时间在每个时间步长被连接为二进制指示符，以表示每个话语的原始长度。然后将四个特征向量连接成一个二维数组，以利用卷积架构进行高效学习。此外，我们应用了一个自适应全局池层来使网络处理这种可变长度的数据。请注意，与原始架构不同，我们修改了内核大小和步幅以适应我们的特性集，它具有4 × T（时间）的瘦形状
+
+
+### references  
+C Ishi, Hiroshi Ishiguro, and Norihiro Hagita. 2006. Using prosodic and voice quality features for paralinguistic information extraction. In Proc. of Speech Prosody. Citeseer, 883–886.
+
+[33] Carlos Toshinori Ishi, Hiroshi Ishiguro, and Norihiro Hagita. 2008. Automatic extraction of paralinguistic information using prosodic features related to F0, duration and voice quality. Speech communication 50, 6 (2008), 531–543.  
+
+Ailbhe Ní Chasaide, Irena Yanushevskaya, and Christer Gobl. 2017. Voice-toAfect Mapping: Inferences on Language Voice Baseline Settings.. In INTERSPEECH. 1258–1262.
+
+## Automatic extraction of paralinguistic information using prosodic features related to F0, duration and voice quality  
+>Ishi C T, Ishiguro H, Hagita N. Automatic extraction of paralinguistic information using prosodic features related to F0, duration and voice quality[J]. Speech communication, 2008, 50(6): 531-543.  
+
+### Abstract  
+The use of acoustic–prosodic features related to F0, duration and voice quality is proposed and evaluated for automatic extraction of paralinguistic information (intentions, attitudes, and emotions) in dialogue speech. Perceptual experiments and acoustic analyses were conducted for monosyllabic interjections spoken in several speaking styles, conveying a variety of paralinguistic information. Experimental results indicated that the classical prosodic features, i.e., F0 and duration, were effective for discriminating groups of paralinguistic information expressing intentions, such as affirm, deny, filler, and ask for repetition, and accounted for 57% of the global detection rate, in a task of discriminating seven groups of paralinguistic information. On the other hand, voice quality features were effective for identifying part of the paralinguistic information expressing emotions or attitudes, such as surprised, disgusted and admired, leading to a 12% improvement in the global detection rate  
+
+提出并评估了使用与F0、持续时间和语音质量相关的声学韵律特征来自动提取对话语音中的副语言信息（意图、态度和情绪）。知觉实验和声学分析进行了单音节感叹词在几种说话风格，传达各种副语言信息。实验结果表明，在区分七组副语言信息的任务中，经典韵律特征，即F0和时长，可以有效区分表达意图的副语言信息组，如肯定、否定、填充和要求重复，并占全局检测率的57%。另一方面，声音质量特征对于识别表达情绪或态度的部分副语言信息是有效的，例如惊讶、厌恶和钦佩，导致全局检测率提高了12%  
+
+### 知识  
+#### F0
+![](img/mk-2024-03-29-17-49-52.png)  
+![](img/mk-2024-03-29-17-50-19.png)  
+#### eGeMAPS  
+[语音情感识别（五）语音特征集之eGeMAPS，ComParE，09IS，BoAW](https://www.cnblogs.com/liaohuiqiang/p/10161033.html)  
+
+![](img/mk-2024-03-29-21-04-35.png)
+虽然本站主要在介绍如何使用Praat脚本，其实提取基频远不止使用Praat脚本这一条路，其它常用的工具或者工具包，有Straight, Reaper, Python，Matlab， R等。有的人经常会困于这样的纠结中，认为Praat脚本必须是比较低级的学习者才用的工具，而我的论文，我的课题要体现出优越感，要体现出高大上，随即转向去用其它办法来提取，我觉得大可不必有这样的胡思乱想，小编比较过使用Praat提取的基频和其它的方法提取的差异，这真的是可以忽略不计的，因为频率的计算自然就是通过对N个采样点使用数学公式，差别只是在于小数点后面几位的大小吧，而真正描述我们的语音现象，使用Praat提取的基频是足够有说服力的。
+
+### Acoustic parameters representing classical and voice quality-related prosodic features  
+与经典韵律特征相关的主要声学特征是**基频（F0）、功率和音段持续时间**。在目前的研究中，我们避免使用功率作为韵律特征，因为麦克风增益、麦克风类型的差异、嘴与麦克风之间的距离以及背景噪声会导致功率具有很大的可变性。  
+
+这章介绍了一下使用F0的变化（F0move）来检测和表达音调的方法。  
+
+## Voice-toAfect Mapping: Inferences on Language Voice Baseline Settings  
+>Ailbhe Ní Chasaide, Irena Yanushevskaya, and Christer Gobl. 2017. Voice-toAfect Mapping: Inferences on Language Voice Baseline Settings.. In INTERSPEECH. 1258–1262.  
+
+### Abstract  
+Modulations of the voice convey affect, and the precise mapping of voice-to-affect may vary for different languages. However, affect-related modulations occur relative to the baseline affect-neutral voice, which tends to differ from language to language. Little is known about the characteristic long-term voice settings for different languages, and how they influence the use of voice quality to signal affect. In this paper, data from a voice-to-affect perception test involving Russian, English, Spanish and Japanese subjects is reexamined to glean insights concerning likely baseline settings in these languages. The test used synthetic stimuli with different voice qualities (modelled on a male voice), with or without extreme f0 contours as might be associated with affect. Cross-language differences in affect ratings for modal and tense voice suggest that the baseline in Spanish and Japanese is inherently tenser than in Russian and English, and that as a corollary, tense voice serves as a more potent cue to high-activation affects in the latter languages. A relatively tenser baseline in Japanese and Spanish is further suggested by the fact that tense voice can be associated with intimate, a low activation state, just as readily as with the high-activation state interested.  
+
+声音的调制传递情感，对于不同的语言，声音到情感的精确映射可能有所不同。然而，与情感相关的调制是相对于基本的情感中性声音而言的，这往往因语言而异。对于不同语言的特征性长期语音设置，以及它们如何影响语音质量对信号影响的使用，知之甚少。在本文中，我们重新检查了一项涉及俄语、英语、西班牙语和日语受试者的声音对情感感知测试的数据，以收集关于这些语言中可能的基线设置的见解。该测试使用了不同声音质量的合成刺激（模仿男性声音），有或没有可能与情感相关的极端f0轮廓。语气和时态语态的跨语言情感评级差异表明，西班牙语和日语的基线天生就比俄语和英语更紧张，作为一个推论，时态语态在后一种语言中是高度激活情感的更有力线索。日语和西班牙语中相对紧张的基线进一步表明，紧张的声音可能与亲密的低激活状态相关联，就像与感兴趣的高激活状态相关联一样。  
+
+只看关于F0和相关特征的部分  
+
+F0轮廓
+
+没什么收获  
+
+## Prediction of Depression Severity Based on the Prosodic and Semantic Features with Bidirectional LSTM and Time Distributed CNN  
+>Mao K, Zhang W, Wang D B, et al. Prediction of depression severity based on the prosodic and semantic features with bidirectional LSTM and time distributed CNN[J]. IEEE transactions on affective computing, 2022.  
+
+
+Depression is increasingly impacting individuals both physically and psychologically worldwide. It has become a global major public health problem and attracts attention from various research fields. Traditionally, the diagnosis of depression is formulated through semi-structured interviews and supplementary questionnaires, which makes the diagnosis heavily relying on physicians’ experience and is subject to bias. However, since the pathogenic mechanism of depression is still under investigation, it is difficult for physicians to diagnose and treat, especially in the early clinical stage. As smart devices and artificial intelligence advance rapidly, understanding how depression associates with daily behaviors can be beneficial for the early stage depression diagnosis, which reduces labor costs and the likelihood of clinical mistakes as well as physicians bias. Furthermore, mental health monitoring and cloud-based remote diagnosis can be implemented through an automated depression diagnosis system. In this article, we propose an attention-based multimodality speech and text representation for depression prediction. Our model is trained to estimate the depression severity of participants using the Distress Analysis Interview Corpus-Wizard of Oz (DAIC-WOZ) dataset. For the audio modality, we use the collaborative voice analysis repository (COVAREP) features provided by the dataset and employ a Bidirectional Long Short-Term Memory Network (Bi-LSTM) followed by a Time-distributed Convolutional Neural Network (T-CNN). For the text modality, we use global vectors for word representation (GloVe) to perform word embeddings and the embeddings are fed into the Bi-LSTM network. Results show that both audio and text models perform well on the depression severity estimation task, with best sequence level F1 score of 0.9870 and patient-level F1 score of 0.9074 for the audio model over five classes (healthy, mild, moderate, moderately severe, and severe), as well as sequence level F1 score of 0.9709 and patient-level F1 score of 0.9245 for the text model over five classes. Results are similar for the multimodality fused model, with the highest F1 score of 0.9580 on the patient-level depression detection task over five classes. Experiments show statistically significant improvements over previous works.  
+
+
+在世界范围内，抑郁症正日益影响着个人的身体和心理。它已成为一个全球性的重大公共卫生问题，引起了各个研究领域的关注。传统上，抑郁症的诊断是通过半结构化访谈和补充问卷进行的，这使得诊断严重依赖医生的经验并容易产生偏见。然而，由于抑郁症的致病机制仍在研究中，因此医生很难诊断和治疗，尤其是在临床早期阶段。随着智能设备和人工智能的快速发展，了解抑郁症与日常行为的关系有利于早期抑郁症诊断，从而减少劳动力成本和临床错误以及医生偏见的可能性。此外，心理健康监测和基于云的远程诊断可以通过自动化抑郁症诊断系统实施。在本文中，我们提出了一种基于注意力的多模态语音和文本表示方法用于抑郁症预测。我们的模型被训练为使用苦恼分析访谈语料库-绿野仙踪（DAIC-WOZ）数据集来估计参与者的抑郁严重程度。对于音频模态，我们使用数据集提供的协作语音分析库（COVAREP）功能，并采用双向长短期记忆网络（Bi-LSTM）和时间分布卷积神经网络（T-CNN）。对于文本模态，我们使用单词表示的全局向量（GloVe）来执行单词嵌入，并将嵌入结果输入到双LSTM网络中。结果显示，音频和文本模型在抑郁症严重程度估计任务上表现良好，音频模型在五个类别（健康、轻度、中度、中度严重和严重）上的最佳序列水平F1得分为0.9870，患者水平F1得分为0.9074，文本模型在五个类别上的序列水平F1得分为0.9709，患者水平F1得分为0.9245。多模态融合模型的结果相似，在五个类别的患者水平抑郁症检测任务中，F1最高得分为0.9580。实验表明，与以前的工作相比，在统计上有显著的改进。  
+
+
+低级特征更倾向于韵律，高级特征更倾向于语义。
+### Audio Feature and Models  
+本文使用COVAREP提取音频特征，这些特征可分为三类:声门流特征（NAQ、QOQ、H1-H2、PSP、MDQ、峰值斜率、Rd）、语音质量特征（F0、VUV）和频谱特征（MCEP、HMPDM、HMPDD）。  
+归一化振幅商（NAQ）通过从声门流及其一阶导数、准开商（QOQ）计算的振幅域测量来量化说话人的时基特征，准开商（QOQ）是开商（OQ）的关联，涉及基于声门相位的振幅推导准开相位、微分声门源频谱的前两个谐波的振幅差（h1 H2）、抛物线频谱参数（PSP）、 其基于说话者的频谱衰减的量化，以及最大离差商（MDQ），其被设计为量化由于发音类型向更有呼吸的发音移动而导致的最大离差。 频谱特征包括梅尔倒谱系数（MCEP0-24）、谐波模型和相位失真平均值（HMPDM0-24）和偏差（HMPDD0-12），梅尔倒谱系数代表声音的短期功率谱。因此，总共有74个音频特征。每个主题都用COVAREP特征表示，即Xi ∈ RT ×F，其中T表示时间维度，它与音频的持续时间成比例。每10毫秒的音频帧被转换成一个音频特征向量。f表示COVAREP为每帧提取的特征数量  
+***The shape of the input tensor is thus (#samples, #frames, 73)***  
+
+## COVAREP—A collaborative voice analysis repository for speech technologies  
+代码用matlab写的，没啥用啊
+>Degottex G, Kane J, Drugman T, et al. COVAREP—A collaborative voice analysis repository for speech technologies[C]//2014 ieee international conference on acoustics, speech and signal processing (icassp). IEEE, 2014: 960-964.  
+
+### Abstract  
+Speech processing algorithms are often developed demonstrating improvements over the state-of-the-art, but sometimes at the cost of high complexity. This makes algorithm reimplementations based on literature difficult, and thus reliable comparisons between published results and current work are hard to achieve. This paper presents a new collaborative and freely available repository for speech processing algorithms called COVAREP, which aims at fast and easy access to new speech processing algorithms and thus facilitating research in the field. We envisage that COVAREP will allow more reproducible research by strengthening complex implementations through shared contributions and openly available code which can be discussed, commented on and corrected by the community. Presently COVAREP contains contributions from five distinct laboratories and we encourage contributions from across the speech processing research field. In this paper, we provide an overview of the current offerings of COVAREP and also include a demonstration of the algorithms through an emotion classification experiment  
+
+语音处理算法经常被开发出来，显示出对现有技术的改进，但有时是以高复杂性为代价的。这使得基于文献的算法重新实现变得困难，因此很难在已发表的结果和当前工作之间进行可靠的比较。本文介绍了一个新的协作和免费可用的语音处理算法库COVAREP，旨在快速方便地访问新的语音处理算法，从而促进该领域的研究。我们预计COVAREP将通过共享贡献和公开可用的代码（可由社区讨论、评论和更正）来加强复杂的实施，从而允许更多可重复的研究。目前COVAREP包含来自五个不同实验室的贡献，我们鼓励来自整个语音处理研究领域的贡献。在本文中，我们概述了COVAREP的当前产品，并通过情感分类实验演示了该算法  
+
+### Pitch tracking  
+基音跟踪是语音分析中最基本的问题之一。基频（F0）是音高的主要声学相关性，主要受声门处声带振动频率的影响，并用于表示语音信号的周期性。考虑到许多语音处理应用中所需的鲁棒性要求，从语音信号中估计F0是一项重要的任务。鉴于F0跟踪具有非常长的历史这一事实，存在大量不同的估计算法。在COVAREP中，包含了一种简单而稳健的基音跟踪算法:残余谐波求和（SRH）法。该方法利用线性预测（LP）残差信号的谐波结构来估计F0和发声边界。SRH已被证明对加性噪声非常稳健。不同F0估计算法的大量选择将为其他分析工具的开发提供更好的可能性
+
+### speech polatity detection  
+语音极性源于声门处产生的不对称激励信号，声门处声带的闭合造成波形的急剧不连续。如果语音极性为正，则这种不连续性（表示为微分声门流信号中的尖峰）具有负振幅。语音极性对人类没有感知上的相关影响，但它可能对各种分析和合成技术的性能产生巨大影响。这是大多数GCI估计或声门分析方法的情况。为此，COVAREP包括一种基于LP残差信号偏斜度的语音极性检测方法。  
+
+### Glottal Closure Instant Detection  
+声门闭合瞬间（GCIs）被定义为声源显著激发的伪周期瞬间。了解精确的GCI位置对于执行许多音高同步分析程序至关重要。COVAREP包括一种名为SEDREAMS（使用剩余激励和基于均值的信号进行语音事件检测）的最先进的GCI检测算法，该算法在中被证明是最准确和稳健的GCI检测方法之一。还包括一种GCI估计方法（SE-VQ），专门用于检测非模态发声的GCIs。COVAREP选择的GCI检测方法将有助于进一步研究音高同步分析。
+
+### Sinusoidal Modeling  
+声门激励产生的周期性转化为语音频谱中的谐波结构。因此，在有声语音信号的短时间窗口（⊪3个周期）的离散傅立叶变换（DFT）中，峰值出现在对应于基频的整数倍的振幅谱中。这些峰值承载了有声语音的感知上最重要的频谱内容，并且已经提出了许多模型来表示它们。正弦模型（SM）直接提取DFT频谱的振幅峰值；谐波模型（HM）利用时域最小二乘解；准调和模型假设了不完美的调和性；自适应准谐波模型、自适应谐波模型（aHM）和扩展的自适应准谐波模型允许在参数估计期间进行频率和幅度解调，这提供了精确的正弦参数估计和重构信号的高感知质量。在COVAREP中，简单统一的接口允许使用SM、HM或aHM模型表示语音信号。通过叠加或谐波合成也可以进行重新合成。最后，通过利用正弦和谐波模型参数，可以建立更抽象的模型，如频谱包络或声门流参数化。  
+
+### Spectral Envelope Estimation and Formant Tracking  
+振幅谱包络的估计是语音处理中反复出现的主题，用于近似声道滤波器响应。COVAREP包括一个所谓的“真包络”（TE）估计器。这个包络是直接在加窗语音信号的DFT频谱上计算的。如上所述，在相同的频谱上，还可以提取振幅峰值，提供正弦或谐波表示。然后，正弦和谐波表示可用于估计离散包络，如离散全极点（DAP）（也可在COVAREP中获得），它假设声道响应遵循自回归（AR）模型（见图2上图）。COVAREP中还包括时间加权LP方法，如WLP、SWLP和XLP，这些方法旨在对语音帧中最有可能对应于声道响应的部分进行时间强调，因此对附加噪声或激励谐波的干扰效应更具鲁棒性。
+虽然上述频谱包络估计技术可用于确定共振峰轨迹，但COVAREP集成了专用的共振峰跟踪器，其性能已被证明优于最先进的技术。该算法基于处理线性调频z变换自变量的负导数（称为微分相位或群延迟频谱）。请注意，该程序中不包括建模，而仅包括群延迟频谱上的峰值拾取。由于其增强的分辨率，该方法在跟踪高阶共振峰时是有效的。 
+
+## Cross Corpus Speech Emotion Recognition using transfer learning and attention-based fusion of Wav2Vec2 and prosody features  
+主要看韵律特征和特征融合部分  
+
+>Naderi N, Nasersharif B. Cross Corpus Speech Emotion Recognition using transfer learning and attention-based fusion of Wav2Vec2 and prosody features[J]. Knowledge-Based Systems, 2023, 277: 110814.  
+
+### Abstract  
+Speech Emotion Recognition (SER) performance degrades when their training and test conditions or corpora differ. Cross-corpus SER (CCSER) is a research branch that discusses adapting an SER system to identify speech emotions on a corpus that has different recording conditions or language from the training corpus. For CCSER, adaption can be performed in the feature extraction module or emotion classifier, which are the two main components of the SER system. In this paper, we propose AFTL method (attention-based feature fusion along with transfer learning), including methods in both feature extraction and classification for CCSER. In the feature extraction part, we use Wav2Vec 2.0 transformer blocks and prosody features, and we propose an attention method for fusing them. In the classifier part, we use transfer learning for transferring the knowledge of a model trained on source emotional speech corpus to recognize emotions on a target corpus. We performed experiments on numerous speech emotional datasets as target corpora, where we used IEMOCAP as the source corpus. For instance, we achieve 92.45% accuracy on the EmoDB dataset, where we only use 20% of speakers for adapting the source model. In addition, for other target corpora, we obtained admissible results.  
+
+当训练和测试条件或语料库不同时，语音情感识别（SER）性能会下降。跨语料库SER（CCSER）是一个研究分支，它讨论了如何调整SER系统以识别语料库上的语音情绪，该语料库具有与训练语料库不同的记录条件或语言。对于CCSER，可以在特征提取模块或情感分类器中执行自适应，这是SER系统的两个主要组件。在本文中，我们提出了AFTL方法（基于注意力的特征融合和迁移学习），包括针对CCSER的特征提取和分类方法。在特征提取部分，我们使用了Wav2Vec 2.0 transformer块和韵律特征，并提出了一种融合它们的attention方法。在分类器部分，我们使用迁移学习来迁移在源情感语音语料库上训练的模型的知识，以识别目标语料库上的情感。我们使用IEMOCAP作为源语料库，在大量语音情感数据集上进行实验。例如，我们在EmoDB数据集上实现了92.45%的准确率，其中我们仅使用20%的说话人来调整源模型。此外，对于其他目标语料库，我们获得了可接受的结果。  
+
+### 特征融合  
+我们建议使用卷积层和注意力模块来融合两个输入块中的可用信息并降低输入特征的维度。图4示出了所提出的方法的总体框图。我们首先通过作为输入块输出的序列信道矩阵应用一个卷积层，该卷积层具有四个神经元，核大小为11×17，步长为5×2。这将融合输入中的可用信息。此外，具有8个头的多头注意力模块被应用于根据情感标签关注最相关的卷积特征图并降低其信道维度。维度为103的全局韵律特征（包括F0、能量、持续时间及其相关的统计测量值）【52，53】被用作MHA的查询输入，以帮助参与所提取的语音表示的最相关的特征映射。韵律特征通过2个非线性完全连接的层来拟合MHA输入。计算注意力输出的平均值和方差，这构建了大小为128的特征向量。为了对获得的嵌入进行分类，我们应用了AM-Softmax算法，该算法在标准Softmax损失函数中引入了附加余量。这提高了模型的辨别能力，并使其能够更好地将特征嵌入分成不同的情感类别。
+
+我们部署了对比中心损失（CC）这一最先进的度量学习算法，以进一步增强模型的区分能力。通过最小化属于同一类别的特征嵌入之间的距离并最大化属于不同类别的特征嵌入之间的距离，  
+
+## Hierarchical emotion recognition from speech using source, power spectral and prosodic features
+>Haque A, Rao K S. Hierarchical emotion recognition from speech using source, power spectral and prosodic features[J]. Multimedia Tools and Applications, 2024, 83(7): 19629-19661.  
+
+
+## Improving the performance of keyword spotting system for children‟s speech through prosody modification
+>Pandey L, Hegde R M. Keyword spotting in continuous speech using spectral and prosodic information fusion[J]. Circuits, Systems, and Signal Processing, 2019, 38: 2767-2791.  
+
+### Abstract  
+Searching for words of interest from a speech sequence is referred to as keyword spotting (KWS). A myriad of techniques have been proposed over the years for effectively spotting keywords from adults‟ speech. However, not much work has been reported on KWS for children‟s speech. The speech data for adult and child speakers differs significantly due to physiological differences between the two groups of speakers. Consequently, the performance of a KWS system trained on adults‟ speech degrades severely when used by children due to the acoustic mismatch. In this paper, we present our efforts towards improving the performance of keyword spotting systems for children‟s speech under limited data scenario. In this regard, we have explored prosody modification in order to reduce the acoustic mismatch resulting from the differences in pitch and speaking-rate. The prosody modification technique explored in this paper is the one based on glottal closure instant (GCI) events. The approach based on zero-frequency filtering (ZFF) is used to compute the GCI locations. Further, we have presented two different ways for effectively applying prosody modification. In the first case, prosody modification is applied to the children‟s speech test set prior to the decoding step in order to improve the recognition performance. Alternatively, we have also applied prosody modification to the training data from adult speakers. The original as well as the prosody modified adults‟ speech data are then augmented together before learning the statistical parameters of the KWS system. The experimental evaluations presented in this paper show that, significantly improved performances for children‟s speech are obtained by both of the aforementioned approaches of applying prosody modification. Prosody-modification-based data augmentation helps in improving the performance with respect to adults‟ speech as well  
+
+### supplement  
+#### GCI  
+声门闭合时刻（glottal closure instant,gci）是指每次声带振动中声门闭合的时刻，gci是每个周期的关键特征点，相邻gci之间的语音波形即构成一个完整周期。因此提取gci可用来将语音信号分割为多个单周期信号，即进行周期分割。
+
+### Introduction  
+区分成人和儿童语音的主要因素是基频。与成人相比，儿童的发声器官较小，因此儿童语音的特点是基频和共振峰频率较高。除此之外，儿童的整体语速较慢，他们的语速也表现出较大的可变性。第一个是成人和儿童声道几何形状的差异，这导致共振峰频率的缩放。第二个失配因素是两组扬声器之间的基频差异。儿童说话的音调范围从200赫兹到500赫兹，而成人说话的音调范围主要在70赫兹到250赫兹之间。第三个不匹配因素是语速的差异。对于儿童来说，平均音素持续时间更长。  
+本文探讨的韵律修改技术是一种基于声门闭合瞬间（GCI）事件锚定的技术。基于零频率滤波（ZFF）的方法用于计算GCI位置。  
+
+两种数据增强方式：  
+- 儿童语音测试集的音高和持续时间在解码前被明确修改。这有助于使儿童说话的音高和时长值与成人说话者相似。因此，减少了声学失配，从而提高了系统的整体性能。  
+- 我们已经明确修改了来自成人说话者的训练数据的音高和持续时间。然后，在学习关键词识别系统的统计参数之前，将原始语音数据和韵律修改后的语音数据混合在一起。这种方法有助于将更大的声学可变性结合到经过训练的声学模型中，从而提高系统性能。
+
+### Modifying pitch and speaking-rate  
+可以通过对给定数据进行重新采样来修改语音发音的音调。同时，重新采样会导致音频信号长度发生不希望的变化。这种不希望的长度变化可以通过通常称为时标修正（TSM）的过程进行最佳补偿。同时，TSM还可以用来改变说话速率。在时间上压缩音频信号会提高说话速率，而扩展信号会降低说话速率。TSM的几种算法是可用的，本文探索了一种基于声门闭合瞬间（GCI）事件的算法，  
+改变给定语音信号的基音周期和持续时间的任务统称为韵律修改。使用基于ZFF-GCI的方法，通过根据期望的音高和持续时间生成新的GCI事件序列来进行韵律修改。
+
+Spectral moment features augmented by low order cepstral coefficients for robust ASR 是更耐噪声的特征
+
+## Keyword Spotting in Continuous Speech Using Spectral and Prosodic Information Fusion  
+>Pandey L, Hegde R M. Keyword spotting in continuous speech using spectral and prosodic information fusion[J]. Circuits, Systems, and Signal Processing, 2019, 38: 2767-2791.  
+
+
+本文提出了一种频谱和韵律信息的融合。频谱和韵律信息融合可以主要分为两大类，特征级的早期融合和模型级的晚期融合。  
+在早期融合的情况下，频谱和韵律信息的特征被连接以形成融合的特征集，该特征集被直接传输到分类器进行识别。为了执行频谱和韵律信息的特征级融合，系统需要使用给定的韵律来预测缺失的韵律特征。为了开发这样一个系统，在数据集上学习了仿射变换模型，其代价函数优化了四个韵律的组合误差。  
+
+频谱和韵律信息之间的不显著相关性  
+
+语音信号中的信息可以大致分为两种形式，即频谱信息和韵律信息。频谱信息已被广泛接受为语音识别的首选方法。通过使用傅立叶变换将基于时间的信号转换到频域来获得频谱特征，如基频、频率分量、频谱质心、频谱通量、频谱密度、频谱衰减等。韵律信息是从语音信号的基音信息、能量轮廓和前五个共振峰轨迹中获得的。它代表语言功能，如语调、声调、重音和节奏。它不能与单个电话大小的片段相关联，而是与大于单个片段的语音单位相关联，因此被称为超片段信息。  
+
+一般来说，根据音高的大小，韵律可以分为四个不同的块。数据库中四种不同韵律的变化，即V er y High（H）、High（H）、Low（L）、V er yLow（L），  
+
+各种音节的计算CCA的分布。可以清楚地注意到，对于大多数情况，相关值非常小，这表明频谱特征和韵律特征中的信息是高度不相关的。因此，这两种特征的信息内容的排他性使它们非常适合信息融合  
+
+
+## MobileNetV4 - Universal Models for the Mobile Ecosystem  
+>Qin D, Leichner C, Delakis M, et al. MobileNetV4-Universal Models for the Mobile Ecosystem[J]. arXiv preprint arXiv:2404.10518, 2024.(Google)  
+
+### Abstract  
+We present the latest generation of MobileNets, known as MobileNetV4 (MNv4), featuring universally efficient architecture designs for mobile devices. At its core, we introduce the Universal Inverted Bottleneck (UIB) search block, a unified and flexible structure that merges Inverted Bottleneck (IB), ConvNext, Feed Forward Network (FFN), and a novel Extra Depthwise (ExtraDW) variant. Alongside UIB, we present Mobile MQA, an attention block tailored for mobile accelerators, delivering a significant 39% speedup. An optimized neural architecture search (NAS) recipe is also introduced which improves MNv4 search effectiveness. The integration of UIB, Mobile MQA and the refined NAS recipe results in a new suite of MNv4 models that are mostly Pareto optimal across mobile CPUs, DSPs, GPUs, as well as specialized accelerators like Apple Neural Engine and Google Pixel EdgeTPU - a characteristic not found in any other models tested. Finally, to further boost accuracy, we introduce a novel distillation technique. Enhanced by this technique, our MNv4-Hybrid-Large model delivers 87% ImageNet-1K accuracy, with a Pixel 8 EdgeTPU runtime of just 3.8ms.  
+
+### Hardware-Independent Pareto Efficiency 
+#### Roofline Model  
+[Roofline Model与深度学习模型的性能分析 - Michael Yuan的文章 - 知乎](https://zhuanlan.zhihu.com/p/34204282)
+
+### Universal Inverted Bottlenecks  
+- Inverted Bottleneck (IB): 对扩展功能激活执行空间混合，以更高的成本提供更大的模型容量。  
+- ConvNext: 通过在扩展之前执行空间混合，允许更便宜的空间混合和更大的内核大小。  
+- ExtraDW: 是本文中介绍的一种新变体，它允许廉价地增加网络深度和感受野。它提供了ConvNext和IB的综合优势。  
+- FFN: 两个1x1逐点卷积(PW)的堆栈，中间有激活层和规范化层。PW是对加速器最友好的操作之一，但在与其他块一起使用时效果最好。  
+
+![](img/mk-2024-04-25-14-28-40.png)  
+
+### Mobile MQA  
+一种专门为加速器优化的新型注意力块，推理速度提高了39%以上。  
+*Importance of Operational Intensity*:最近对视觉模型的研究主要集中在减少算术运算以提高效率。然而，移动加速器性能的真正瓶颈通常不是计算，而是内存访问。这是因为加速器提供的计算能力远远大于内存带宽。因此，简单地最小化MAC可能不会带来更好的性能。相反，我们必须考虑运算强度，即算术运算与内存访问的比率。  
+
+*Importance of Operational Intensity*:MHSA将查询、键和值投影到多个空间中，以捕获不同方面的信息。多查询注意（MQA）通过在所有头部使用共享键和值来简化这一过程。虽然多个查询头是必不可少的，但大型语言模型可以有效地共享键和值的单个头，而不会牺牲准确性。当批量令牌的数量与特征维度相比相对较小时，密钥和值的一个共享头极大地减少了存储器访问需求，从而显著提高了操作强度。
+
+*Importance of Operational Intensity*:受MQA（利用跨查询、键和值的非对称计算）的启发，我们将空间缩减注意力（SRA）融入到优化的MQA块中，以降低键和值的分辨率，同时保留高分辨率查询。我们的方法使用步长为2的3×3深度方向卷积代替AvgPooling进行空间缩减，提供了一种经济高效的方法来提高模型容量。
+
+*Mobile MQA block*:
+![](img/mk-2024-04-25-15-21-39.png)
+  
+#### MQA(Multi-Query Attention)  
+![](img/mk-2024-04-25-14-59-52.png)
+#### SRA(Spatial Reduction Attention)  
+![](img/mk-2024-04-25-15-09-13.png)  
+
+### Design of MNv4 Models  
+为了有效地实例化UIB块，我们采用带有定制增强功能的TuNAS来提高性能。
+我们的方法通过实现两阶段搜索减轻了TuNAS对较小过滤器和扩展因子的偏见，这归因于参数共享。该策略解决了UIB深度方向层和其他搜索选项之间参数计数的差异。
+
+粗粒度搜索:最初，我们专注于确定最佳过滤器大小，同时保持固定参数:一个默认扩展因子为4的反向瓶颈块和一个3x3的深度方向内核。
+
+细粒度搜索:在初始搜索结果的基础上，我们搜索UIB的两个深度层的配置（包括它们的存在以及3x3或5x5的内核大小），保持扩展因子恒定为4。
+
+表3展示了与传统的单阶段搜索相比，通过我们的两阶段搜索实现的效率和模型质量的提高，在传统的单阶段搜索中，在单个TuNAS通道中探索统一的搜索空间。
+![](img/mk-2024-04-25-15-51-00.png)
+
+具体来说，在每个可搜索阶段的开始，空间分辨率显著下降，ExtraDW成为首选。ExtraDW中的双深度层设计有助于扩大感受野，增强空间混合，并有效减轻分辨率损失。同样，出于类似的原因，在MNv4Conv车型的早期阶段也经常选择ExtraDW。对于前几层进行了大量空间混合的最后几层，选择FFN和ConvNext是因为通道混合提供了更大的增量增益。
+
+![](img/mk-2024-04-25-16-02-04.png)  
+![](img/mk-2024-04-25-16-02-13.png)  
+![](img/mk-2024-04-25-16-02-27.png) 
+![](img/mk-2024-04-25-16-02-49.png)  
+
+### Result  
+![](img/mk-2024-04-25-16-16-01.png)  
+
+
+## A convnet for the 2020s
+>Liu Z, Mao H, Wu C Y, et al. A convnet for the 2020s[C]//Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2022: 11976-11986.
+
+### Abstract 
+The “Roaring 20s” of visual recognition began with the introduction of Vision Transformers (ViTs), which quickly superseded ConvNets as the state-of-the-art image classification model. A vanilla ViT, on the other hand, faces difficulties when applied to general computer vision tasks such as object detection and semantic segmentation. It is the hierarchical Transformers (e.g., Swin Transformers) that reintroduced several ConvNet priors, making Transformers practically viable as a generic vision backbone and demonstrating remarkable performance on a wide variety of vision tasks. However, the effectiveness of such hybrid approaches is still largely credited to the intrinsic superiority of Transformers, rather than the inherent inductive biases of convolutions. In this work, we reexamine the design spaces and test the limits of what a pure ConvNet can achieve. We gradually “modernize” a standard ResNet toward the design of a vision Transformer, and discover several key components that contribute to the performance difference along the way. The outcome of this exploration is a family of pure ConvNet models dubbed ConvNeXt. Constructed entirely from standard ConvNet modules, ConvNeXts compete favorably with Transformers in terms of accuracy and scalability, achieving 87.8% ImageNet top-1 accuracy and outperforming Swin Transformers on COCO detection and ADE20K segmentation, while maintaining the simplicity and efficiency of standard ConvNets.  
+
+视觉识别的“咆哮的20年代”始于视觉变压器(vit)的引入，它迅速取代ConvNets成为最先进的图像分类模型。另一方面，普通的ViT在应用于一般的计算机视觉任务(如对象检测和语义分割)时面临困难。正是分级变形金刚(如Swin变形金刚)重新引入了几个ConvNet priors，使变形金刚作为通用视觉中枢实际可行，并在各种视觉任务中表现出卓越的性能。然而，这种混合方法的有效性仍然在很大程度上归功于变压器的内在优势，而不是卷积固有的电感偏差。在这项工作中，我们重新审视了设计空间，并测试了纯ConvNet所能达到的极限。我们逐渐将标准ResNet“现代化”,用于视觉转换器的设计，并在此过程中发现了影响性能差异的几个关键组件。这一探索的成果是一系列被称为ConvNeXt的纯ConvNet模型。ConvNeXts完全由标准ConvNet模块构建而成，在精度和可扩展性方面与变压器不相上下，实现了87.8%的ImageNet top-1精度，在COCO检测和ADE20K分段方面优于Swin变压器，同时保持了标准conv net的简单性和效率。  
+
+### Introduction  
+测试纯 ConvNet 所能实现的极限，为卷积正名！  
+
+### Modernizing a ConvNet: a Roadmap  
+![](img/mk-2024-04-26-21-47-42.png)  
+
+#### Training Techniques  
+- ResNet 的训练从原来的 90 个 epoch 扩展到 300 个 epoch。我们使用 AdamW 优化器、Mixup、Cutmix、RandAugment、随机擦除等数据增强技术，以及包括随机深度和标签平滑在内的正则化方案。
+- 这种增强的训练方法将 ResNet-50 模型的性能从 76.1%提高到 78.8% (+2.7%)，这意味着传统 ConvNet 和视觉 Transformer 之间的性能差异很大一部分可能是由于训练技巧。我们将在整个“现代化”过程中使用具有相同超参数的固定训练方案。
+
+#### Macro Design  
+- 根据设计，我们将每个阶段的块数从 ResNet-50 中的 (3, 4, 6, 3) 调整为 (3, 3, 9, 3)。准确率从 78.8% 提高到 79.4%。  
+- 我们用使用 4⇥4、步长 4 的卷积层实现的 patchify 层替换了 ResNet 风格的干细胞。准确率从 79.4% 变为 79.5%。这表明 ResNet 中的干细胞可以用 ViT 那样的更简单的“补丁”层替代，这将产生类似的性能。  
+
+#### Depthwise Separable Conv  
+- 使得网络性能提高到 80.5%
+#### Inverted Bottleneck  
+- 采用b，80.5% 到 80.6%
+  ![](img/mk-2024-04-26-22-19-38.png)  
+
+#### Large Kernel Size  
+- 要探索大内核，先决条件之一是向上移动深度卷积层的位置（图 3 (b) 至 (c)）,这也是 Transformers 中的一个设计决策：MSA 块放置在 MLP 层之前。由于我们有一个反向瓶颈块，这是一个自然的设计选择 - 复杂/低效的模块（MSA、大内核卷积）将具有较少的通道，而高效、密集的 1⇥1 层将承担繁重的工作。此中间步骤将 FLOP 减少到 4.1G，导致性能暂时下降到 79.9%。
+- 网络的性能从 79.9% (3⇥3) 增加到 80.6% (7⇥7)，而网络的 FLOP 保持大致相同。  
+
+#### Micro Design  
+- 我们发现在我们的 ConvNet 中 ReLU 也可以用 GELU 替代，尽管准确率保持不变（80.6%）。  
+- 我们从残差块中消除了所有 GELU 层，除了两个 1 ⇥ 1 层之间的一层之外，复制了 Transformer 块的风格。该过程将结果提高了 0.7% 至 81.3%，
+- 我们删除了两个 BatchNorm (BN) 层，只在 conv 1 ⇥ 1 层之前留下一个 BN 层。这进一步将性能提升至 81.4%，已经超过了 Swin-T 的结果。
+- 在原始ResNet中直接用LN替代BN会导致性能不理想[83]。通过对网络架构和训练技术的所有修改，我们在这里重新审视使​​用 LN 代替 BN 的影响。我们观察到我们的 ConvNet 模型在使用 LN 进行训练时没有任何困难；事实上，性能稍好一些，准确率达到 81.5%。
+![](img/mk-2024-04-26-22-34-27.png)  
+
+
+## FLEXIBLE KEYWORD SPOTTING BASED ON HOMOGENEOUS AUDIO-TEXT EMBEDDING
+>Nishu K, Cho M, Dixon P, et al. Flexible keyword spotting based on homogeneous audio-text embedding[C]//ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2024: 5050-5054.
+
+### Abstract  
+Spotting user-defined/flexible keywords represented in text frequently uses an expensive text encoder for joint analysis with an audio encoder in an embedding space, which can suffer from heterogeneous modality representation (i.e., large mismatch) and increased complexity. In this work, we propose a novel architecture to efficiently detect arbitrary keywords based on an audio-compliant text encoder which inherently has homogeneous representation with audio embedding, and it is also much smaller than a compatible text encoder. Our text encoder converts the text to phonemes using a graphemeto-phoneme (G2P) model, and then to an embedding using representative phoneme vectors, extracted from the paired audio encoder on rich speech datasets. We further augment our method with confusable keyword generation to develop an audio-text embedding verifier with strong discriminative power. Experimental results show that our scheme outperforms the state-of-the-art results on Libriphrase hard dataset, increasing Area Under the ROC Curve (AUC) metric from 84.21% to 92.7% and reducing Equal-Error-Rate (EER) metric from 23.36% to 14.4%.
+
+发现文本中表示的用户定义/灵活关键字经常使用昂贵的文本编码器与嵌入空间中的音频编码器进行联合分析，这可能会受到异构模态表示（即大的不匹配）和增加的复杂性的影响。在这项工作中，我们提出了一种新颖的架构，可以基于音频兼容的文本编码器有效地检测任意关键字，该编码器本质上具有音频嵌入的同构表示，并且它也比兼容的文本编码器小得多。我们的文本编码器使用字形音素 (G2P) 模型将文本转换为音素，然后使用从丰富语音数据集上的配对音频编码器中提取的代表性音素向量进行嵌入。我们进一步通过可混淆的关键字生成来增强我们的方法，以开发具有强大辨别力的音频文本嵌入验证器。实验结果表明，我们的方案优于 Libriphrase 硬数据集上的最新结果，将 ROC 曲线下面积 (AUC) 指标从 84.21% 增加到 92.7%，并将等错误率 (EER) 指标从 23.36 减少% 至 14.4%。
+
+### Introduction  
+我们提出的技术使用音素到向量生成用户定义关键字的文本嵌入，该音素到向量也是由配对音频编码器构建的，从而使两个嵌入空间之间的不匹配很小，并提高了灵活 KWS 的性能，而无需额外的文本编码器。  
+![](img/mk-2024-04-27-10-03-24.png)
+- 我们提出了一种非参数音频兼容文本编码器，以生成从音频编码器学习的语音嵌入空间派生的文本嵌入。
+- 我们引入了一种易混淆的关键字生成方案，通过使灵活的 KWS 意识到真实单词的语音混淆性来减少错误触发。
+- 我们制定了一个判别性设置来训练基于端到端音频文本的KWS 模型，该模型由音频编码器、音频兼容文本编码器和验证器组成。
+
+### Method  
+![](img/mk-2024-04-27-10-08-46.png)  
+![](img/mk-2024-04-27-10-14-17.png)  
+#### Audio Encoder  
+使用小型Conformer作为音频编码器，捕获全局和局部音频上下文。具体来说，我们在第一步使用CTC损失训练音频编码器。然后，我们使用经过训练的音频编码器来构建音素到向量(P2V)数据库。最后，针对KWS任务对CED模型进行端到端判别训练。  
+*训练数据是什么样子的，标签是什么？（回答：标签是音素序列，但是哪里来的？）*
+
+#### Audio-compliant Text Encoder  
+The key idea is to derive the text embedding from the learnt phonetic embedding space of the paired audio encoder with a much smaller model footprint.
+
+![](img/mk-2024-04-27-10-45-23.png)  
+
+音素到向量:音素到向量(Phoneme-to-Vector, P2V)将给定的音素转换成向量，再将这些向量串接起来形成文本嵌入，这种转换基于P2V数据库。因此，一个好的P2V数据库对于高性能的KWS至关重要。为了建立P2V数据库，***我们在评估模式下在libphrase训练数据集上运行训练好的音频编码器。***  
+
+![](img/mk-2024-04-27-20-58-44.png)
+
+局部向量LV是一个音素对应的音频向量(计算方法是对应这个音素的audio embedding的几帧的平均值)![](img/mk-2024-04-27-21-09-20.png)
+我们进一步定义一个全局向量GV(p)，作为先前定义的数据集d中所有样本中p的所有局部向量的平均值，然后将GV(p)存储在图2中的P2V数据库中。
+
+下图显示了局部向量在语义上聚类的效果，实现了高的类内紧密性和类间分离。同时，如果我们观察图3左上小图中具有相同元音符号但具有不同词法重音标记的元音音素，如(OW0, OW1, OW2)，我们会发现它们的类间亲近度比其他音素高，但彼此之间仍然存在分离。这支持了我们的方法在为音频兼容的文本编码器生成有效音素向量方面的有效性。  
+![](img/mk-2024-04-27-21-13-18.png)  
+
+#### Verifier  
+我们生成了e和f的余弦相似矩阵来度量音频和文本嵌入之间的相似度。由于两个嵌入都来自相同的嵌入空间，我们期望余弦矩阵中正音频和文本对的单调逐步对齐模式，其中一个音素可以与一个或多个连续音频帧相关联。我们借用中提出的动态序列划分(DSP)算法来获得这种对齐模式。对于进一步的处理，我们只关注沿着这种对齐模式的相似度权重，以强制音频和文本的顺序匹配。因此，除了对齐区域，我们屏蔽了余弦矩阵的其他部分。我们将这个掩码余弦矩阵与音频嵌入进行点积，得到最终的音文本一致矩阵，(不太懂为什么)其维数为m × d，其中m为音素序列长度，d为嵌入维数。该输出被传递到单个GRU层，然后传递到前馈层，该层为输入音频和文本对生成最终匹配分数。
+
+#### 混淆关键字训练样本的生成  
+由于用户定义关键字与发音相似的非预期关键字的语音混淆而导致的错误触发是KWS任务中的一个关键挑战。与固定的KWS不同，在灵活的KWS中，模型内部没有固定的用户定义关键字类，其中许多关键字甚至不包括在训练数据集中。因此，为了更好地处理任意用户定义的关键字，并赋予模型对语音易混淆性的判别理解能力，我们设计了一种新的方法来自动生成易混淆关键字，作为训练流程的一部分，如图4所示。生成方法在以下步骤中执行，其中输入是关键字，输出是关键字的易混淆变体。  
+![](img/mk-2024-04-27-21-47-28.png)  
+
+### Experimental Results
+#### Dataset  
+我们使用LibriSpeech构建Libriphrase训练和测试数据集，步骤来自。libphrase训练数据集由train-clean-100/360组成，测试数据集由train-others-500组成。Libriphrase测试数据集分为两部分:Libriphrase Easy (LE)和Libriphrase Hard (LH)。首先，我们对来自train-clean-100/360的较长音频训练音频编码器，并对来自libphrase的较短音频进行微调。然后，我们在libphrase训练数据集上对CED模型进行端到端训练。我们在LE和LH上对所提出的方法进行了评估。此外，我们在Google Speech commands V1测试数据集中的10个短命令上评估了我们的方法。我们使用带有NVIDIA V100 gpu的x86 Linux机器在PyTorch上进行实验。  
+
+#### Training and Evaluation  
+![](img/mk-2024-04-27-22-09-46.png)  
+
+输入音频使用80通道滤波器组从25ms的窗口和10ms的步幅进行处理。共形超参数为{6个编码器层，编码器维数d=144，卷积核大小为3，注意头4}。我们使用Adam优化器[18]和变压器学习率计划[13]进行训练，热身步数为5k，共150次。  
+
+对于端到端的CED模型训练，我们保持音频编码器冻结，并使用交叉熵损失训练验证器。我们的CED模型共有380万个参数。与[6]中使用的昂贵的文本编码器(DistilBERT[19]的66M)相比，我们的文本编码器除了G2P模型(0.83M)之外没有任何额外的参数。我们采用了详尽的数据批处理方案进行CED训练，如图4所示。在Libriphrase训练数据集的关键字上形成一个大小为32的训练批。对于在批中选择的每个关键字，有三个小批(每个大小为11):一个正集，一个负集和一个混淆集，其中音频样本与正集相同，但与可混淆的关键字配对。  
+
+评估结果表明，我们提出的方法在ROC曲线下面积(AUC)和等错误率(EER)指标方面都优于[5]和[6]的基线，如表1中的our +conf *所示。在LH数据集上，它将最先进的结果提升了10.1%的AUC指标和38.3%的EER指标。
+
+在LE数据集上，它将[6]的最先进基线结果在AUC指标上提高了2.05%，在EER指标上提高了76.9%。此外，我们在没有任何微调的情况下，在不同语音特征的数据集speech Commands V1上测量模型的泛化程度，并与基线[5]进行比较，基线已经在类似设置中进行了评估。我们发现在AUC指标上有15.9%的持续改善，在EER指标上有50.6%的持续改善。
+
+![](img/mk-2024-04-27-22-10-06.png)  
+
+## Learning Audio-Text Agreement for Open-vocabulary Keyword Spotting  
+>Shin H K, Han H, Kim D, et al. Learning audio-text agreement for open-vocabulary keyword spotting[J]. arXiv preprint arXiv:2206.15400, 2022.  
+
+### Abstract  
+在本文中，我们提出了一种新的端到端用户自定义关键字识别方法，该方法利用语音和文本序列之间的语言对应模式。与以前需要注册语音关键字的方法不同，我们的方法将输入查询与注册的文本关键字序列进行比较。为了将音频和文本表示置于共同的潜在空间中，我们采用了基于注意力的跨模态匹配方法，该方法以端到端的方式进行训练，具有单调匹配损失和关键字分类损失。我们还利用去噪损失来提高声嵌入网络在噪声环境中的鲁棒性。此外，我们还引入了libphrase数据集，这是一个新的基于librisspeech的短短语数据集，用于有效地训练关键词识别模型。与其他单模态和跨模态基线相比，我们提出的方法在各种评估集上获得了具有竞争力的结果  
+
+### Method  
+将声学嵌入Ea作为键K和值V输入网络，将文本嵌入Et作为交叉关注的查询Q  
+亲和矩阵A表示音频和文本嵌入之间的时间相关性。如果Q和K代表相同的语言内容，则A呈现单调模式;如果它们表示不同的内容，则A显示一个模糊的模式。模式提取器的输出是注意力矩阵Attn，其中包含有关音频和文本协议的信息。  
+模式鉴别器决定音频和文本输入是否具有相同的关键字(正)或不具有(负)。一个m维的GRU层以注意力矩阵作为输入，最后一帧的输出被馈送到一个具有sigmoid函数的全连接层。
+
+我们的训练目标包括去噪损失(LDN)、单调匹配损失(LMM)和检测损失(LD)。我们的训练目标包括去噪损失(LDN)、单调匹配损失(LMM)和检测损失(LD)。
+其中λ1和λ2为权重因子，本文将其设为0.5、0.3。
+![](img/mk-2024-04-28-22-51-48.png) 
+
+## PhonMatchNet: Phoneme-Guided Zero-Shot Keyword Spotting for User-Defined Keywords
+这篇有代码，很重要，可以看看这类文章这种结构代码是什么样子的
+>Lee Y H, Cho N. Phonmatchnet: phoneme-guided zero-shot keyword spotting for user-defined keywords[J]. arXiv preprint arXiv:2308.16511, 2023.  
+
+
+### Abstract  
+本研究提出一种新颖的零射击自定义关键字识别模型，利用关键字的音素关系来提高性能。与之前的方法不同，我们同时使用了话语和音素层面的信息。我们提出的方法包括两流语音编码器架构、基于自注意的模式提取器和音素级检测损失，以在各种语音环境中实现高性能。基于实验结果，我们提出的模型优于基线模型，并且与全镜头关键词识别模型相比具有竞争力。我们提出的模型显著提高了所有数据集的EER和AUC，包括熟悉词、专有名词和难以区分的发音，平均相对提高分别为67%和80%。我们提出的模型的实现代码可在https://github.com/ncsoft/PhonMatchNet上获得。  
+
+### Method  
+我们提出的模型包括三个子模块:带有预训练嵌入器的音频和文本编码器、模式提取器和模式鉴别器。我们在训练准则中使用了两个基于交叉熵损失的损失函数，分别在语音(Lutt)和音素(Lphon)水平上计算。  
+![](img/mk-2024-04-29-17-28-02.png)  
+#### Audio Encoder  
+音频编码器包括两个特征提取器:一个是预训练的语音嵌入器[6]，它在表示一般发音方面表现优异，另一个是完全可训练的特征提取器，它学习特殊发音的表示，如专有名词。预训练的语音嵌入器有775毫秒的窗口，每80毫秒计算96维特征向量。我们使用1-D转置卷积对特征和时间维度进行上采样，核大小为5，步幅为4，以及完全连接的层。完全可训练的特征提取器包括两个核大小为3的一维卷积、批处理归一化和ReLU层。第一个卷积层的步长为2，而其他的步长为1。作为输入的40维mel滤波器组系数每10 ms提取一次，窗口为25 ms。最后，将两个特征向量相加，计算每20ms提取的128维特征向量。我们将音频嵌入表示为ea∈R Ta×128，其中Ta和128分别是音频和嵌入维度的长度。  
+#### Text Encoder  
+文本编码器，类似于[5]，包括一个预训练的字素到音素(G2P)模型1，然后是一个完全连接的层和一个ReLU激活函数。我们从编码器的最后隐藏状态中提取G2P嵌入。我们用E t∈R Tt×128表示文本嵌入，这与音频编码器相同。  
+#### Pattern extractor  
+考虑到KWS任务需要保持较少模型参数的特点，我们的模式提取器基于自注意机制[7,15]，而不是交叉注意机制[16,19]。如[20]所示，在多模态融合过程中，与其他注意机制不同，自注意方法不需要其他模块。  
+音频和文本嵌入直接concat ,计算自注意力，我们使用下三角矩阵作为注意掩膜，仅使用模态内的因果信息。  
+#### Pattern discriminator  
+我们的模式鉴别器确定两个概率，音频和关键词的匹配概率以及音频和音素的匹配概率。为了检测话语级匹配，我们使用一个128维的GRU层，将沿时间维的联合嵌入ej作为输入。最后一个隐藏状态的输出被输入到一个具有sigmoid函数的全连
+同样，我们只从联合嵌入E j序列中提取音素序列，并将其通过sigmoid函数输入到完全连接层中，以检测音素级匹配同样，我们只从联合嵌入E j序列中提取音素序列，并将其通过sigmoid函数输入到完全连接层中，以检测音素级匹配
+#### Training criterion
+我们的训练准则(Ltotal)包括两个二值交叉熵(BCE)损失:一个是话语- (Lutt)，一个是音素级检测损失(Lphon)。
+音素级检测丢失。在不使用语音和发音对齐信息的情况下，我们提出了语音水平检测损失来提高识别相似发音(例如，“friend”和“trend”)的性能。如果语音标签的音素序列与关键字标签的音素序列相同，则定义音素级基础真值y为1，否则定义为0
+
+### Experiment
+我们使用了三个数据集:LibriPhrase[5]、Google Speech Commands V1 (G)[8]和Qualcomm Keyword Speech dataset (Q)[9]进行训练和评估。在训练阶段，我们使用MS-SNSD数据集[22]中的LibriPhrase和babble noise训练集进行鲁棒检测。详细训练条件与[5]相似。在评估过程中，我们使用了数据集G、Q、LibriPhrase-easy (LPE)和LibriPhrase-hard (LPH)。LPE和LPH是在LibriPhrase的测试集中重新分类为容易和难以区分锚对和负对的数据集[5]。我们通过在这些数据集上测量样本水平上的EER和AUC来评估我们提出的模型。由于数据集G和Q不提供负对，我们将每个数据集候选关键词中除正对外的所有关键词视为负对来计算EER和AUC。表2提供了G和Q中的锚和否定的例子。  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
