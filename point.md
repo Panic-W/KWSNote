@@ -4,3 +4,6 @@
 
 文本音频跨模态匹配方法
 zero shot keyword spot
+
+angular prototypical loss
+Open Nearest Class Mean (openNCM) 

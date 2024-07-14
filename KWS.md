@@ -1431,23 +1431,241 @@ The key idea is to derive the text embedding from the learnt phonetic embedding 
 ### Experiment
 我们使用了三个数据集:LibriPhrase[5]、Google Speech Commands V1 (G)[8]和Qualcomm Keyword Speech dataset (Q)[9]进行训练和评估。在训练阶段，我们使用MS-SNSD数据集[22]中的LibriPhrase和babble noise训练集进行鲁棒检测。详细训练条件与[5]相似。在评估过程中，我们使用了数据集G、Q、LibriPhrase-easy (LPE)和LibriPhrase-hard (LPH)。LPE和LPH是在LibriPhrase的测试集中重新分类为容易和难以区分锚对和负对的数据集[5]。我们通过在这些数据集上测量样本水平上的EER和AUC来评估我们提出的模型。由于数据集G和Q不提供负对，我们将每个数据集候选关键词中除正对外的所有关键词视为负对来计算EER和AUC。表2提供了G和Q中的锚和否定的例子。  
 
+## I3D: Transformer architectures with input-dependent dynamic depth for speech recognition  
+>Peng Y, Lee J, Watanabe S. I3D: Transformer architectures with input-dependent dynamic depth for speech recognition[C]//ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2023: 1-5.
+
+### Abstract  
+基于变压器的端到端语音识别已经取得了巨大的成功。然而，巨大的占用空间和计算开销使得在一些实际应用程序中部署这些模型变得困难。模型压缩技术可以减小模型大小并加快推理速度，但压缩后的模型具有固定的体系结构，这可能是次优的。我们提出了一种具有输入相关动态深度(I3D)的新型变压器编码器，以实现强大的性能效率权衡。基于i3d的模型在推理时具有相似的层数，通过迭代层修剪优于普通的Transformer和静态修剪模型。我们还对门概率和输入依赖性进行了有趣的分析，这有助于我们更好地理解深度编码器。  
+
+### Method  
+波形首先通过前端转换为特征序列，然后通过CNN进一步处理和下采样，之后添加位置嵌入。随后，该序列通过一堆i3d编码器层进行处理，以产生高级特征。整个设计遵循了Transformer的设计思路。但是，Transformer总是使用固定的体系结构，而不管输入是什么。我们的I3D根据输入的话语选择MHA和FFN的不同组合。为了确定一个模块是否应该执行或跳过，为每个MHA或FFN模块引入一个二进制门。
+![](img/mk-2024-05-10-17-54-32.png)  
+这个训练目标的主要问题是二进制门是不可微的。为了解决这个问题，我们应用了GumbelSoftmax[30,31]技巧，它允许从离散分布中绘制硬(或软)样本。考虑一个离散随机变量Z，其概率P(Z = k)∝αk，对于任意k = 1，…， K.要从该分布中抽取样本，我们可以先从标准Gumbel分布中抽取K i.i.d个样本{gk} K K =1，然后选择扰动对数概率最大的指标:  
+
+我们提出了两种门预测器，即局部门预测器和全局门预测器。我们在所有实验中都使用了一个多层感知器(MLP)，其隐藏层大小为32，计算开销很小。
+#### 本地门预测器
+本地门预测器(LocalGP或LGP)与特定的I3D编码器层相关联，如图1b所示。每一层都有自己的门预测器，其参数是独立的。  
+#### 全局门预测器
+全局门预测器(GlobalGP或GGP)是为整个I3D编码器定义的，如图1c所示。它根据编码器的输入，也就是第一层的输入，来预测各层的门分布:X = X(0)∈R T ×d。其中，通过平均池化将序列变换为单个向量x = x(0)∈R d。然后，将其分别映射为所有N个MHA和FFN门的两组概率分布
+
+##  ON-DEVICE CONSTRAINED SELF-SUPERVISED LEARNING FOR KEYWORD SPOTTING VIA QUANTIZATION AWARE PRE-TRAINING AND FINE-TUNING  
+>G. -P. Yang, Y. Gu, S. Macha, Q. Tang and Y. Liu, "On-Device Constrained Self-Supervised Learning for Keyword Spotting via Quantization Aware Pre-Training and Fine-Tuning," ICASSP 2024 - 2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), Seoul, Korea, Republic of, 2024, pp. 10951-10955, doi: 10.1109/ICASSP48485.2024.10447258. keywords: {Training;Representation learning;Performance evaluation;Quantization (signal);Computational modeling;Self-supervised learning;Speech enhancement;Self-supervised learning;keyword-spotting;on-device classification;quantization aware training;low-bit quantization},(爱丁堡大学)
+
+### Abstract  
+大型自监督模型在各种语音处理任务中表现出色，但是由于它们占用大量内存，在资源有限的设备上部署它们通常是不切实际的。以前的研究已经证明了自我监督预训练对关键词识别的有效性，即使模型容量有限。为了在最小化模型资源需求的同时保持高性能，我们研究了量化感知训练的实现，用于自监督预训练和微调，专门针对设备上模型预算的约束进行了定制。我们的实验强调了在模型训练和调优的两个阶段中选择和同步QAT方法的关键作用。我们在16.6k小时的内部关键字识别数据集上评估了我们的方法，并表明即使模型权重和激活的位大小减少了四倍，性能也没有下降。  
+
+### QAT  
+[量化感知训练Quantization-aware-training](https://zhuanlan.zhihu.com/p/548174416)
+### ACR  
+绝对余弦正则化(Absolute Cosine Regularization, ACR)[13]是一种应用于模型权重的量化感知训练(quantiization Aware Training, QAT)方法，它引入了一种正则化损失，促使权重接近特定的预定义量化值。它被设计为与线性量化方案(例如，int8表示)一起工作，其中量化值均匀分布。在这种情况下，绝对余弦函数用作评估每个模型权重与其中一个量化值的接近程度的手段。
+其实还是不太懂  
+
+### moving average quantization  
+移动平均量化
+除了模型权重量化外，以往的研究通常采用硬量化方法对激活进行量化。在硬量化中，每个激活被映射到一组预定义的量化值，例如在[-1，+1]或[0，+1]范围内的值。然而，这种方法可能有局限性，因为不同的层可能表现出不同的激活动态范围。为了解决这个限制，我们利用移动平均量化方案(MA)进行激活。该方案根据当前批次的值动态调整量化范围的最小值和最大值，提供了更大的灵活性。我们根据它们的用法对激活进行分类，例如查询、键、值或softmax操作，每个激活在不同的层中都有其独特的范围。该量化方案依赖于两个参数:(1)n:范围的最小值，(2)m:最大值。  
+### Dynamic Quantization  
+为了进一步减少对激活动态的限制，我们利用动态量化(Dyn)，根据当前训练迭代的激活分配n和m，并将每个激活划分为额外的组。对于形状(f, d)的隐藏激活，其中f表示帧索引，d表示特征维度，我们为每个f独立分配n, m个值，允许激活中的每个帧单独量化。  
+
+## TDT-KWS: FAST AND ACCURATE KEYWORD SPOTTING USING TOKEN-AND-DURATION TRANSDUCER  
+>Xi Y, Li H, Yang B, et al. TDT-KWS: Fast and Accurate Keyword Spotting Using Token-and-Duration Transducer[C]//ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2024: 11351-11355.(上海交大)  
+
+### Abstract  
+长期以来，在资源受限的边缘设备上设计高效的关键字定位(KWS)系统一直是一个备受关注的问题。现有的KWS搜索算法通常遵循帧同步方法，尽管大多数帧与关键字无关，但在每一帧重复进行搜索决策。在本文中，我们提出了TDT-KWS，它利用令牌和持续时间传感器(TDT)来完成KWS任务。我们还为基于换能器的模型提出了一种新的KWS任务特定解码算法，该算法支持流语音场景中高效的帧异步关键字搜索。通过对公开的Hey Snips和自建的LibriKWS-20数据集的评估，我们提出的kws解码算法比传统的ASR解码算法产生更准确的结果。此外，TDTKWS在实现显著推理加速的同时，实现了与RNN-T和传统TDT-ASR系统同等或更好的唤醒词检测性能。此外，实验表明，与RNN-T KWS相比，TDT-KWS对噪声环境的鲁棒性更强。  
+
+### Introduction  
+- 提出了一种动态检测连续流语音中换能器关键字开始的KWS解码算法。与传统的ASR译码算法相比，该算法可以获得更好的KWS性能。
+- 我们提出了TDT-KWS，与传统的RNN-T KWS相比，它在开源KWS数据集“Hey Snips”[18]和我们自构建的LibriKWS-20数据集[19]上实现了相当或更好的性能，同时在推理过程中运行速度提高了2-4倍。
+- TDT-KWS在低信噪比(SNR)环境中比传统的RNN-T系统表现出更强的鲁棒性，这对于KWS在极端环境中减少误报至关重要。
+
+### Method  
+RNNT预测当前音持续时间，因此可以跳步，加快推理速度。  
+
+## Efficient Sequence Transduction by Jointly Predicting Tokens and Durations  
+>Xu H, Jia F, Majumdar S, et al. Efficient sequence transduction by jointly predicting tokens and durations[C]//International Conference on Machine Learning. PMLR, 2023: 38462-38484.  
+
+### Abstract  
+本文介绍了一种用于序列到序列任务的新型token - duration换能器(TDT)架构。TDT通过联合预测令牌及其持续时间(即发射令牌所覆盖的输入帧数)来扩展传统的RNN-Transducer架构。这是通过使用具有两个输出的联合网络来实现的，这两个输出是独立规范化的，以生成token和持续时间的分布。在推理过程中，TDT模型可以根据预测的持续时间输出跳过输入帧，这使得它们比传统的换能器逐帧处理编码器输出要快得多。在不同的序列转导任务上，TDT模型比传统的换能器具有更高的精度和更快的推理速度。用于语音识别的TDT模型实现了比传统换能器更高的精度和高达2.82倍的推理速度。与传统的换能器相比，用于语音翻译的TDT模型在MUST-C测试中获得了超过1 BLEU的绝对增益，其推理速度提高了2.27倍。在语音意图分类和槽填充任务中，TDT模型比传统换能器的意图精度提高了1%以上(绝对)，同时运行速度提高了1.28倍。我们的TDT模型的实现将与NeMo (https: //github.com/NVIDIA/NeMo)工具包一起开源。  
+
+### Introduction  
+为了缓解自回归解码的推理计算成本高，提出预测token持续时间实现跳帧。  
+
+### Method  
+![](img/mk-2024-05-20-22-34-39.png)  
+![](img/mk-2024-05-20-22-40-12.png)  
+
+## ROBUST WAKE WORD SPOTTING WITH FRAME-LEVEL CROSS-MODAL ATTENTION BASED AUDIO-VISUAL CONFORMER  
+>Wang H, Cheng M, Fu Q, et al. Robust Wake Word Spotting With Frame-Level Cross-Modal Attention Based Audio-Visual Conformer[C]//ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2024: 11556-11560.  
+
+### Abstract  
+近年来，基于神经网络的唤醒词识别在干净的音频样本上取得了良好的性能，但在嘈杂的环境下却表现不佳。视听唤醒词识别(AVWWS)由于视觉唇部运动信息不受复杂声场景的影响而备受关注。以往的作品多采用简单的加法或串联法进行多模态融合。对多模式相关性的研究相对较少。为了提高AVWWS系统的性能，本文提出了一种新的帧级跨模态注意(FLCMA)模块。该模块可以通过同步嘴唇运动和语音信号，在帧级对多模态信息进行建模。我们训练端到端基于FLCMA的视听共形器，并通过微调AVWWS任务的预训练单峰模型进一步提高性能。该系统在远场MISP数据集上获得了新的最先进的结果(4.57% WWS得分)  
+
+### Method  
+simple fusion(late)对模态之间的相关性建模不是很好。
+![](img/mk-2024-05-23-15-18-43.png)  
+
+FLCMA(Frame Level Cross Modal Attention), 音频特征(T, D)，视频特征(T, D)，多模态特征为(M, T, D)，其中M=2，是音频和视频特征在新维度的拼接。 
+ 
+
+![](img/mk-2024-05-23-15-04-28.png)  
+FLCMA注意力公式：
+![](img/mk-2024-05-23-15-26-31.png)  
+
+#### Front end 
+对于视觉流，采用带三维卷积层的ResNet-18将输入视频帧转换为时间特征。视觉输入具有(T, H, W, C)的形状，然后使用全局平均池化沿空间维度压缩以获得(T, D)的形状。然后使用线性层将这些时间特征投影到共形编码器的维度。  
+对于音频流，使用包含两个二维卷积层的子采样模块将提取的声学特征转换为时间特征。然后使用线性层将这些特征投影到编码器的尺寸上。由于视频的采样率普遍低于音频，在标准特征提取后，将音频特征在时间维度上降采样 
+
+#### Encoder  
+我们使用改进的变压器或整流器块作为我们的编码器层。基于FLCMA的变压器模块包括一个FLCMA模块、一个标准多头自注意(MHSA)模块和一个前馈(FFN)模块。基于FLCMA的Conformer模块包括一个FLCMA模块、一个MHSA模块、一个CONV模块和一对Macaron-Net风格的FFN模块。标准的共形块结合了CONV和MHSA，在单一模态中捕获局部和全局校正。与FLCMA模块一起，这个改进的共形模块可以进一步利用帧级的模态间信息  
+
+#### Convolution fusion  
+受[22]的启发，我们使用卷积融合模块来融合在共形编码器块之后的视听特征，而不是像以前的作品[7,16]那样通常使用平均或拼接。如图3所示，我们使用多层卷积模块来帮助减少多模态特征直接融合造成的损坏，该模块由一个通道为4,2,1的串联二维卷积模块组成。  
+![](img/mk-2024-05-23-16-16-15.png)  
+
+#### Attentive Pooling and classifier  
+此外，我们结合了一个关注池化层，通常用于SV，以捕获每帧的重要性并提取更鲁棒的分类向量。然后将该向量通过一系列具有sigmoid函数的完全连接的线性层来输出唤醒词的概率。
+
+### Experiment  
+#### data  
+我们在2021年第一次MISP挑战的AVWWS数据集上评估了我们提出的系统[13]。该数据集用于检测远场家庭场景中使用的唤醒词“小T，小T”。发布的数据库包含约125小时，有两个子集:训练集(47k+负样本和5K+正样本)和开发(Dev)集(2k+负样本和600+正样本)。音频样本包括单通道近场音频，2通道中场音频和6通道远场音频;视频样本包括单人高清中场视频和多人远场视频。此外，为参赛者提供了一个没有注释的评价集(8K +)，这只是远场的。我们从MISP委员会获得注释，以确保我们的结果与其他团队的结果进行公平比较。  
+#### 其他实验设置
+为了评估我们系统的性能，我们遵循竞赛委员会提供的指导方针。我们使用误拒率(FRR)、误报警率(FAR)和WWS评分。  
+音频特征形状(256,80)fbank，视频形状(64,112,112,3)，每个像素值被归一化到[0,1]的范围内。  
+数据增强:对于音频流，我们使用了各种受[13,15]启发的技术，包括负分段、速度扰动、轻微修剪和SpecAugment[27]。我们还在原始的近场音频上执行了几个额外的步骤来模拟中场和远场音频。热室声学工具用于产生房间脉冲响应。我们还纳入了官方来源提供的噪声，在-15至15 dB的范围内随机调整信噪比(SNR)。MVDR方法还用于在训练数据中添加波束形成增强音频。  
+对于视觉流，我们还使用了与[15]相同的基于视频的数据增强方法，包括速度摄动、逐帧旋转、水平翻转、帧级裁剪、颜色抖动和灰度缩放。此外，我们采用随机直方图均衡化来进一步增强数据。  
+
+#### 训练策略  
+模型训练:对于基于FLCMA模块的变压器或整流器结构，我们使用6个自关注块，每个块有4个头，256维隐藏大小，前馈层1024维，这意味着D = 256, h = 4, N = 6。批量大小设置为48。学习率设置为0.001，并在前10,000步由Adam优化器预热。我们采用加权BinaryCrossEntropy (BCE) Loss(负:正=1:5)来解决正负样本之间的不平衡问题。对于Pretrain策略，我们首先使用上述设置训练由前端模块、单模态编码器、池层和分类器组成的两个单模态模型，然后使用单模态模型的参数初始化基于FLCMA的多模态模型，最后对多模态模型进行微调，学习率为0.0001。  
+
+## OPEN-VOCABULARY KEYWORD-SPOTTING WITH ADAPTIVE INSTANCE NORMALIZATION  
+>Navon A, Shamsian A, Glazer N, et al. Open-vocabulary keyword-spotting with adaptive instance normalization[C]//ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2024: 11656-11660.  
+
+### Abstract 
+在自动语音识别(ASR)中，开放词汇关键字识别是一项关键且具有挑战性的任务，其重点是检测语音话语中的用户定义关键字。关键字识别方法通常将语音和关键字映射到一个联合嵌入空间中，以获得一定的亲和力评分。在这项工作中，我们提出了AdaKWS，这是一种新的关键字识别方法，其中文本编码器被训练输出关键字条件的归一化参数。这些参数用于处理听觉输入。我们使用具有挑战性和多样化的多语言基准进行了广泛的评估，并显示出比最近的关键字发现和ASR基线有重大改进。此外，我们还研究了我们的方法在训练过程中未见过的低资源语言上的有效性。结果表明，与基线方法相比，性能有了实质性的提高。  
+
+### Method  
+audio encoder 是whisper的encoder，text encoder的输出是keyword adaptive moudule的adaptive instance norm的两个参数。
+![](img/mk-2024-05-24-19-33-58.png)
+
+### negative sampling  
+随机抽取负样例不足以训练一个能够准确分离声学相似词的KWS模型。直观上，随机采样的关键词在声学上与v中的关键词相距甚远。  
+#### character substitution  
+我们通过替换一个或多个字符来改变一个正关键字v +。新字符可以随机选择，也可以根据声学相似字符的先验映射(“s”→“z”，“p”→“b”等)。  
+#### Keyword concatenation  
+这里我们通过将一个随机关键字连接到一个正关键字来形成一个负关键字
+#### Nearest keyword  
+为了获得与参考关键字v +在声学上相似的负关键字v -，我们根据文本嵌入表示e(v)对v -进行采样。具体来说，我们使用h的最后一个隐藏层来形成嵌入表示。为了保证效率，我们在每个训练批中抽取负例样本，通过查询余弦距离最小的关键字，即v−= arg minv∈VB\v+ d(e(v +)， e(v))，其中VB表示批B中的关键字。
+
+
+## Arbitrary style transfer in real-time with adaptive instance normalization  
+>Huang X, Belongie S. Arbitrary style transfer in real-time with adaptive instance normalization[C]//Proceedings of the IEEE international conference on computer vision. 2017: 1501-1510.  
+
+这篇主要看adaptive instance normalization  
+仿射变化的两个参数是另一个模型给出的。
+
+## CONTRASTIVE LEARNING WITH AUDIO DISCRIMINATION FOR CUSTOMIZABLE KEYWORD SPOTTING IN CONTINUOUS SPEECH  
+>Y. Xi, B. Yang, H. Li, J. Guo and K. Yu, "Contrastive Learning with Audio Discrimination for Customizable Keyword Spotting in Continuous Speech," ICASSP 2024  
+这篇可以关注一下，着眼解决连续语音中协同发音等造成关键词与孤立时发音有差别或误报。  
+### Abstract  
+连续语音中的可定制关键字识别(KWS)因其在现实世界中的应用潜力而受到越来越多的关注。虽然对比学习(CL)被广泛用于提取关键字表示，但以往的对比学习方法都是对预分割的孤立词进行操作，并且只采用音频-文本表示匹配策略。然而，对于连续语音中的KWS，协同发音和流式分词很容易为不同的文本产生相似的音频模式，从而可能触发假警报。为了解决这一问题，我们提出了一种新的带有音频识别的CL (CLAD)方法来学习关键字表示，同时具有音频-文本匹配和音频-音频识别能力。这里，对训练期间的每个滑动窗口使用考虑音频-音频和音频-文本CL数据对的InfoNCE损失。对开源libphrase数据集的评估表明，与以前的CL方法相比，使用滑动窗口级别的InfoNCE损失产生了相当的性能。此外，在连续语音数据集librisspeech上的实验表明，通过结合音频识别，CLAD比没有音频识别的CL获得了显著的性能提升。同时，与两阶段的KWS方法相比，端到端基于CLAD的KWS不仅具有更好的性能，而且具有显著的速度提升。  
+
+### Introduction  
+第二类可定制的KWS系统是基于表示匹配的端到端系统。它涉及两个输入:注册的关键字引用和需要检测的语音数据。其基本思想是确保关键字语音表示比非关键字语音更类似于登记的参考模式。这里不需要复杂的搜索方法，通过简单的表示特征匹配就可以做出KWS决策，因此称为端到端方法。经典的系统是使用预先登记的音频样本进行按例查询(QByE)。近年来，度量学习方法被提出。另一种近年来越来越流行的数据类型是文本格式。基于文本的注册的优点是用户友好且不受声注册环境的影响。然而，纯文本登记时，难以处理发音相似的语音，遇到混淆的关键词语音时容易被错误唤醒。以往基于表示学习的系统主要应用于预分割的孤立KWS。对于连续语音中的可定制KWS，流操作模式要求在连续滑动窗口中生成表示，这给有效的负样本生成带来了困难。此外，由于协同发音效应，表征学习更具挑战性。除了音频-文本匹配之外，混淆音频辨别也很重要。对音频混淆的忽视可能会导致连续语音中明显的虚警增加。为了解决这些问题，在本文中，我们提出了一种新的音频文本表示学习方法来实现连续语音中高效的端到端KWS。我们的核心贡献可以概括如下:
+- 与以往的音频-文本匹配策略不同，本文提出了一种基于音频识别(CLAD)的对比学习(CL)方法来提高关键词的表示质量。此外，我们还设计了一种数据增强方案来生成大量相似和混淆的片段。实验表明，在连续语音场景下，额外的音频识别策略可以显著改善可定制的KWS。
+- 我们建议对CLAD使用滑动窗口级别的InfoNCE。与Triplet或SoftTriple等其他CL丢失相比，InfoNCE可以适应丰富的正样例和负样例使用，这对于在具有音频-文本匹配和音频-音频区分标准的连续语音中有效执行CL特别有用。请注意，对于孤立的KWS，与其他经典的CL损失相比，InfoNCE显示出具有竞争力的性能。
+- 通过来自CLAD的表示，我们构建了一个端到端可定制的KWS系统。与具有相同声学模型和多种搜索策略的两阶段方法相比，我们的系统可以获得更好的性能和显着的速度。不同关键词之间的标准差也较低，显示了其稳定性。  
+- With representation from CLAD, we construct an end-to-end customizable KWS system. Compared to the two-stage approaches with the same acoustic model and various search strategies, our system can achieve both better performance and significant speed up. Also, the standard deviations among different keywords are lower, which shows its stability.  
+
+### 使用音频辨别对比学习的端到端KWS  
+![](img/mk-2024-05-25-15-43-33.png)  
+#### The Frame-level AM Training  
+首先，首先对帧级声学提取器进行预训练，为CLAD系统生成表征。这种情况下的建模单元是单声道，经过预处理以建立帧级训练目标的强制对齐。在此之后，声学模型基于交叉熵(CE)标准以监督学习的方式进行训练。在我们的初步实验中，我们发现在CLAD系统的训练过程中，声学模型(AM)冻结和解冻之间的性能差距是边际的。因此，我们在预训练后冻结AM，使其仅提供更高级别的表示。  
+#### Training Pairs and Training Strategy  
+对于可定制的关键字发现(KWS)任务，由于目标关键字在训练期间是未知的，因此不可能以与固定的KWS任务相当的规模收集特定关键字的数据。因此，有效地利用一般ASR数据成为训练一个健壮的、可定制的KWS模型的关键组成部分。我们通过设计一个简单的数据增强策略来解决这个问题，即使用关键字附近的语音滑动段来生成大量的训练对。在此基础上，我们开发了一种基于语义的训练策略，以有效地学习音频文本匹配和音频识别的细微差别。  
+
+为了防止训练和推理之间的不匹配，我们利用一致的估计函数计算任意关键字的窗口长度，其定义如下:  
+![](img/mk-2024-05-25-16-09-50.png)  
+其中，Nphns表示关键字音素的个数，Tmean表示基于训练数据集计算的平均音素长度。Lmargin是一个超参数，用于为段提供额外的长度。  
+我们在公式(1)中加入Lmargin有两个主要原因:(1)为了容纳超过平均发音时长的关键词。(2)封装与关键词相近的上下文信息，有助于考虑协同发音效应，在模型训练中区分混淆内容。在我们的实验中，Tmean是基于librisspeech数据集估计的，并设置为90ms。同时，我们将Lmargin设置为300ms，以便在关键字音素序列之外容纳大约三到四个额外的语音单位。  
+为了有效地学习文本和音频表示之间的匹配相关性，在训练过程中必须构建大量的文本-音频配对。如图1所示，我们在这一轮中随机抽取任意单词作为给定话语的关键字。在每个minibatch中，我们表示第i个话语中的第j个采样文本关键字为$W_{i,j}$，所有N个对应的正音频片段为$A^{p1}_{i,j}$, $A^{p2}_{i,j}$,......$A^{pN}_{i,j}$，以及所有M个对应的负音频段为$A^{n1}_{i,j}$, $A^{n2}_{i,j}$,......$A^{nN}_{i,j}$, 正负样例的选取将在下方讨论。  
+ 每个正音频-文本对由音频段$A^{pk}_{i,j}$和对应的关键字$W_{i,j}$组成。正音频样本$A^{pk}_{i,j}$和小批量中的所有文本关键字W(不包括相关关键字$W_{i,j}$)被认为是负音频-文本配对。对于给定的小批量，音频-文本对的损失定义如下:
+ ![](img/mk-2024-05-25-16-34-01.png)  
+ （实际上就是交叉熵损失）  
+ 式中at为音频-文本对的缩写。Sim表示用于确定相似度的函数，而τ表示用于控制表征空间中特征浓度的温度超参数。  
+
+ 在流媒体场景中，仅仅考虑将文本表示与音频表示相匹配是不够的。这个问题源于这样一个事实，即在流滑动窗口推理过程中，在训练过程中没有遇到许多反例段。例如，某些片段除了包含唤醒词的部分外，还可能包含前一个词的部分。带音频文本的对比学习(CL)本身就很难区分这些具有挑战性的负面音频例子。为了解决这个问题，我们提出了带有音频识别的CL (CLAD)。  
+我们根据估计窗口与基真关键字位置之间的重叠比例，从原始音频中为每个关键字切片正音频和负音频片段，任意两个$A^{pk}_{i,j}$和$A^{pl}_{i,j} (k \neq l)$被认为是正音频对。任意$A^{pk}_{i,j}$和$A^{nx}_{i,j}$被认为是负的一对。由于每个采样关键字有$C_n^2$个正对，因此音频对的数量是巨大的。对于小批量，音频音频对的损失定义如下:
+![](img/mk-2024-05-25-16-40-43.png)  
+其中aa是音频-音频对的缩写。Sim和τ与前面提到的相同。  
+最终的CLAD表示损失标准定义如下:  
+$$ \mathcal{ L = \alpha L_{aa} + L_{at} }$$  
+这里，α是一个超参数，用来平衡匹配部分和区分部分的比例。  
+通过实验，我们发现公式(2)中的温度τat = 0.12，公式(3)中的温度τaa = 0.2，公式(4)中的温度α = 0.15都能很好地应用于我们的实验。在接下来的讨论中，除非另有说明，否则这三个超参数将被设置为指定的值。  
+
+#### End-to-end KWS with Keyword Representation Matching  
+与其他基于嵌入的系统一样，通过音频片段的嵌入与注册文本关键字之间的相似性来评估关键字存在的置信度。然而，我们的操作是在连续的语音流上进行的，而不是孤立的片段。我们首先通过公式(1)估计音频段长度，并将测试音频轨道分割成片，确保相邻段之间有一半重叠。在此基础上，我们依次转发音频片段，计算与关键词表示的相似度。最高的相似度得分被认为是关键字得分。如果关键字得分超过阈值，我们将重置模型状态并引入1秒冷却期以防止重复激活。
+
+### Experiment  
+#### data  
+我们在两种情况下评估我们的CLAD系统:(1)连续的KWS，其中关键字可以位于给定句子中的任何位置。为了执行这个评估，我们构建了librisspeech的kws版本。(2)分离的KWS，其中每个样本仅包含一个关键字或一个非关键字。由于以前基于表示学习的方法不是为连续模式设计的，我们将我们的方法与使用LibriPhrase的其他方法进行了比较。  
+
+#### Implementation details  
+所有实验中使用的声学模型包括5层Deep Feedforward Sequential Memory (DFSMN)，隐藏大小为512，投影大小为128。DFSMN模块的左侧上下文设置为10，而右侧上下文设置为1。
+
+声学编码器和文本编码器都由三个128维的blstm和一个64维的投影组成。最后一层blstm的输出被权重预测层的输出加权求和，权重预测层将128维向量映射到一个标量。声学和语义加权和向量然后由两个不同的128维全连接层单独映射到对比嵌入空间。我们使用余弦相似度来获得两个对比嵌入的最终相似度得分。我们的系统中参数总数约为220万个，适用于设备上的KWS任务。我们使用SGD优化器，初始学习率为5e-6。迷你批大小设置为12,288帧。如果验证集上的损失没有减少，则学习率减半。此外，如果连续三轮验证集上的损失没有减少，则训练过程结束。  
+
+### Result  
+#### Performance on isolated KWS  
+在这一部分中，我们比较了CLAD与其他表示学习方法对孤立KWS的性能，如表1所示。CMCD和CLAD的结果表明，尽管我们的方法是为连续语音流设计的，但与孤立KWS的主流化方法相比，我们可以获得相当甚至稍微更好的性能。第2、3和4行的结果表明，InfoNCE非常适合基于表示学习的可定制KWS任务，并且它比其他两种经典的对比学习损失获得了更好的性能。对第4行和第5行的比较表明，即使在孤立关键字的上下文无关环境中，我们提出的CLAD策略仍然获得了一些性能提升。  
+![](img/mk-2024-05-25-17-05-57.png)  
+#### Performance on continuous KWS  
+实验结果见表2。当测试数据集简单时，基于图的基线在高频关键字上的性能较好，而在复杂声环境或相对较少的关键字上的性能急剧下降。与两个基线模型相比，除了test-clean数据集中相对较少的关键字(5,10,15)的基于图的结果外，我们的模型在简单的test-clean数据集和具有挑战性的test-other数据集上都可以获得5到50个单词的一致增益。  
+![](img/mk-2024-05-25-17-06-55.png)  
+当关键词的数量为5个或10个时，结果更多地反映了对高频词的建模能力。相反，当关键词数量比较多时，如40或50，结果更多地反映了模型的泛化，任意指定关键词。对于可定制的KWS系统，这两个方面对于研究人员或用户来说同样至关重要。在众多关键词上的好结果为用户提供了选择任意关键词的能力，在高频词上的好结果提供了确定关键字后进行进一步定制的可能性。  
+#### The importance of audio discrimination  
+为了探索所提出的CLAD的有效性，我们使用无音频区分的音频-文本CL进行了消融实验，结果如图2所示。性能的下降是惊人的。毫不奇怪，音频-音频对对于提高模型性能至关重要，因为它们引入了判别信息，用连续语音中的关键词区分局部相似的负样本，从而显著提高了性能。  
+![](img/mk-2024-05-25-17-10-07.png)  
+
+#### Inference Speed
+在这一部分中，我们提出了相对速度加速度(RSA)来探索推理延迟。RSA定义为基准执行时间与模型执行时间之比。如表3所示，与其他基线相比，所提出的CLAD系统具有惊人的推理速度。这主要归因于我们的方法，它采用了端到端表示向量相似性匹配方法。这有效地消除了对耗时的搜索模块的需求。  
+![](img/mk-2024-05-25-17-11-45.png)  
+
+### Conclusions  
+本文提出了一种基于对比学习(CL)的语音识别方法，用于连续语音中KWS的表示学习。与以往的语言学习方法都关注于音频-文本匹配不同，我们进一步引入了用于鲁棒表示学习的音频识别标准。在连续语音中，我们提出了一种高效的端到端可定制的KWS。实验表明，虽然本文提出的是针对连续语音，但在孤立语音的KWS情况下，与其他音频文本表示匹配方法相比，该方法可以取得相当或更好的性能。与目前广泛使用的两阶段方法相比，该方法在大多数测试配置下都具有最佳性能。此外，与两阶段方法相比，实现了显著的速度提升。  
+
+
+## TACOS: LEARNING TEMPORALLY STRUCTURED EMBEDDINGS FOR FEW-SHOT KEYWORD SPOTTING WITH DYNAMIC TIME WARPING  
+>Wilkinghoff K, Cornaggia-Urrigshardt A. TACos: Learning temporally structured embeddings for few-shot keyword spotting with dynamic time warping[C]//ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2024: 9941-9945.  
+
+### Abstract  
+为了将信号分割成待分析的块，少量关键字定位(KWS)系统通常使用固定大小的滑动窗口。由于不同关键字或其语音实例的长度不同，选择正确的窗口大小是一个问题:窗口应该足够长，以包含识别关键字所需的所有必要信息，但较长的窗口可能包含不相关的信息，如多个单词或噪声，从而使可靠地检测关键字的偏移量变得困难。我们提出了TACos，一种新的角度边缘损失，用于导出保留底层语音信号时间属性的二维嵌入。在KWS- dailytalk上进行的实验中，使用这些嵌入作为动态时间扭曲的模板显示优于使用其他表示或滑动窗口，并且在训练期间使用关键字的时间反转段可以提高性能。  
+
+
+## FunAudioLLM: Voice Understanding and Generation Foundation Models for Natural Interaction Between Humans and LLMs  \
+
+
+### Abstract  
+本报告介绍了FunAudioLLM，这是一个模型族，旨在增强人类与大型语言模型(llm)之间的自然语音交互。其核心是两个创新模型:SenseVoice，处理多语言语音识别、情感识别和音频事件检测;和CosyVoice，它促进自然语音生成，控制多种语言，音色，说话风格和说话者身份。SenseVoice-Small提供5种语言的超低延迟ASR, SenseVoice-Large支持超过50种语言的高精度ASR，而CosyVoice在多语言语音生成，零拍摄上下文学习，跨语言语音克隆和指令遵循功能方面表现出色。SenseVoice和CosyVoice相关的模型已经在Modelscope和Huggingface上开源，相应的训练、推理和微调代码也在GitHub上发布。通过将这些模型与llm集成，FunAudioLLM实现了语音对语音翻译、情感语音聊天、交互式播客和富有表现力的有声书叙述等应用，从而突破了语音交互技术的界限。演示可以在https://fun-audio-llm.github.io上获得，代码可以在https://github.com/FunAudioLLM上访问。  
+
+### Introduction  
+FunAudioLLM的核心是我们的两个突破性模型:用于语音理解的SenseVoice和用于语音生成的CosyVoice。
+
+SenseVoice: 多语言语音识别（自动检测）,情感识别，音频事件检测。标点符号，集成文本规范化。
+CosyVoice：多语言情感TTS，音色克隆（跨语言，情感，韵律，风格）细粒度副语言特征，说话人认证，风格。
+
+CosyVoice有三个开源模型:CosyVoice- base300m，专门用于准确表示说话者身份，零采样学习和跨语言语音克隆;CosyVoice-instruct-300M，它专注于生成具有情感表现力的声音，并允许通过教学文本进行细致的调整，将其功能扩展到对演讲者身份(Shimizu等人，2023)，说话风格(Ji等人，2024)和细粒度副语言特征(Kanda等人，2024)等各个方面的可控制性;以及CosyVoice-sft-300M，该系统已对7名多语种使用者进行了微调，准备立即部署。  
 
 
 
+### FunAudioLLM Models  
+#### Overview of FunAudioLLM  
+FunAudioLLM由两个用于语音理解和生成的基础模型组成，分别名为SenseVoice和CosyVoice。SenseVoice支持多语言语音识别，训练时间超过30万小时。具体来说，SenseVoice-Small在推理方面非常高效，其识别延迟小于80ms，比WhisperSmall和whisperlarge分别快5倍和15倍以上，并且SenseVoice-Large支持50多种语言的高精度ASR。此外，SenseVoice支持丰富的转录，包括最先进的情感识别、音频事件检测、反向文本规范化(Pusateri et al .， 2017)和标点符号  
 
+我们的语音生成模型CosyVoice可以生成多语种的演讲，该模型经过超过17万小时的训练，使用了5种语言，包括中文(ZH)、英语(EN)、日语(JP)、粤语(Yue)和韩语(KO)。CosyVoice生成的样本可以实现低于2%的WER和说话人相似度在75%以上，达到了人类同等的质量水平。CosyVoice支持零拍摄上下文学习，这使得语音克隆与提示语音甚至3秒。音色、情感、韵律和风格可以在语言内部或跨语言复制。我们还发布了一个指令模型，该模型可以用自然的纹理指令控制说话者身份、说话风格(如情绪)和其他细粒度的副语言特征。FunAudioLLM模型的概述如图1所示。  
+![](img/mk-2024-07-05-21-41-54.png)   
 
-
-
-
-
-
-
-
-
-
-
-
-
+看到这足够了  
+![](img/mk-2024-07-05-21-56-25.png)  
+![](img/mk-2024-07-05-21-56-41.png)  
 
 
 
